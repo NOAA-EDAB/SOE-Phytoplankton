@@ -1,0 +1,352 @@
+; $ID:	SOE_PPREQUIRED_EXTRACTS.PRO,	2021-01-05-12,	USER-KJWH	$
+  PRO SOE_PP_REQUIRED, VERSION, DIR_DATA=DIR_DATA, PRODUCTS=PRODUCTS, SHAPEFILE=SHAPEFILE
+
+;+
+; NAME:
+;   SOE_PP_REQUIRED
+;
+; PURPOSE:
+;   Extract the CHL and PP data for the PP Required SOE analyses (for Andy Beet)
+;
+; CATEGORY:
+;   $CATEGORY$
+;
+; CALLING SEQUENCE:
+;   SOE_PP_REQUIRED, VERSION
+;
+; REQUIRED INPUTS:
+;   VERSION........ The SOE version
+;
+; OPTIONAL INPUTS:
+;   Parm2.......... Describe optional inputs here. If none, delete this section.
+;
+; KEYWORD PARAMETERS:
+;   KEY1........... Document keyword parameters like this. Note that the keyword is shown in ALL CAPS!
+;
+; OUTPUTS:
+;   OUTPUT.......... Decribe the output of this program or function
+;
+; OPTIONAL OUTPUTS:
+;   None
+;
+; COMMON BLOCKS: 
+;   None
+;
+; SIDE EFFECTS:  
+;   None
+;
+; RESTRICTIONS:  
+;   None
+;
+; EXAMPLE:
+; 
+;
+; NOTES:
+;   $Citations or any other useful notes$
+;   
+; COPYRIGHT: 
+; Copyright (C) 2021, Department of Commerce, National Oceanic and Atmospheric Administration, National Marine Fisheries Service,
+;   Northeast Fisheries Science Center, Narragansett Laboratory.
+;   This software may be used, copied, or redistributed as long as it is not sold and this copyright notice is reproduced on each copy made.
+;   This routine is provided AS IS without any express or implied warranties whatsoever.
+;
+; AUTHOR:
+;   This program was written on January 05, 2021 by Kimberly J. W. Hyde, Northeast Fisheries Science Center | NOAA Fisheries | U.S. Department of Commerce, 28 Tarzwell Dr, Narragansett, RI 02882
+;    
+; MODIFICATION HISTORY:
+;   Jan 05, 2021 - KJWH: Initial code written
+;-
+; ****************************************************************************************************
+  ROUTINE_NAME = 'SOE_PP_REQUIRED'
+  COMPILE_OPT IDL2
+  SL = PATH_SEP()
+  
+  IF NONE(VERSION)   THEN VERSION='V2021' ; MESSAGE, 'ERROR: Must provide the SOE VERSION'
+
+  FOR V=0, N_ELEMENTS(VERSION)-1 DO BEGIN
+    VER = VERSION[V]
+    VERSTR = SOE_VERSION_INFO(VER)
+    VPRODS = TAG_NAMES(VERSTR.PROD_INFO)
+    
+    IF NONE(DIR_DATA) THEN DIR_OUT = VERSTR.DIRS.DIR_PP_REQUIRED ELSE DIR_OUT = DIR_DATA
+    PROD_DATASETS = []
+    IF ANY(PRODUCTS)  THEN BEGIN
+      PRODS    = PRODUCTS
+      IF N_ELEMENTS(DATASETS) EQ N_ELEMENTS(PRODUCTS) THEN PROD_DATASETS = DATASETS
+    ENDIF ELSE PRODS = VERSTR.INFO.PPREQ_PRODS
+    IF ANY(DATERANGE) THEN DR       = DATERANGE ELSE DR = VERSTR.INFO.DATERANGE
+    YEARS = YEAR_RANGE(DR,/STRING)
+
+    ; ===> Get the SHAPEFILE information for the subarea extracts
+    IF NONE(SHAPEFILE)  THEN SHPFILES  = VERSTR.INFO.PPREQ_SHPFILE ELSE SHPFILES = SHAPEFILE
+    IF NONE(SUBAREAS) THEN BEGIN
+      IF VERSTR.INFO.SHAPEFILE EQ VERSTR.INFO.PPREQ_SHPFILE[0] THEN NAMES = VERSTR.INFO.SUBAREA_NAMES $
+                                                               ELSE NAMES = ['GOM','GB','MAB']
+    ENDIF ELSE NAMES = SUBAREAS
+        
+    MP = VERSTR.INFO.MAP_OUT
+    PPRODS = VERSTR.INFO.PPREQ_PRODS ; ['PPD-VGPM2','CHLOR_A-PAN']
+    PPERIODS = VERSTR.INFO.PPREQ_PERIODS ; 'M'
+    
+    FOR SA=0, N_ELEMENTS(SHPFILES)-1 DO BEGIN ; LOOP THROUGH SUBAREA SHAPE FILES
+      SHPFILE = SHPFILES[SA]
+      DIR_PPSUB = DIR_OUT + SHPFILE + SL
+      
+      SHPSTR = []
+      PFILES = []
+      FOR PP=0, N_ELEMENTS(PPRODS)-1 DO BEGIN ; LOOP THROUGH PRODS
+        PROD = PPRODS[PP]
+        VPROD = VALIDS('PRODS',PROD)
+        OK = WHERE(VPRODS EQ VPROD,COUNT)
+        IF COUNT NE 1 THEN MESSAGE, 'ERROR: ' + GPR + ' not found in the SOE Version structure'
+        DTSET = VERSTR.PROD_INFO.(OK).DATASET
+        DVERSION = VERSTR.PROD_INFO.(OK).VERSION
+        CASE VPROD OF
+          'PPD': BEGIN & RTAG = 'GMEAN' & RNGE = '0.001_50.0' & SUM_STATS=1 & END
+          'CHLOR_A': BEGIN & RTAG = 'GMEAN' & RNGE = '0.001_80.0' & SUM_STATS=0 & END
+        ENDCASE
+        DIR_MONTH = DIR_PPSUB + 'MONTHLY_EXTRACTS-' + PROD + SL & DIR_TEST, DIR_MONTH
+  
+        FILES = []
+        SAVEFILES = []
+        FOR Y=0, N_ELEMENTS(YEARS)-1 DO BEGIN ; LOOP THROUGH YEARS
+          YR = YEARS[Y]
+         
+          
+        ; ===> GET FILES
+          FILES = GET_FILES(DTSET, PRODS=PROD, PERIODS='M', DATERANGE=YR, VERSION=DVERSION)
+  
+        ; ===> CREATE OUTPUT FILE NAMES
+          FP = PARSE_IT(FILES,/ALL)
+          MPIN = FP[0].MAP
+          IF ~SAME(FP.MAP) THEN MESSAGE, 'ERROR: All files do not have the same MAP.'
+          IF SHPSTR EQ [] THEN SHPSTR = READ_SHPFILE(SHPFILE, MAPP=MPIN, ATT_TAG=ATT_TAG, COLOR=COLOR, VERBOSE=VERBOSE, NORMAL=NORMAL, AROUND=AROUND)
+          SUBAREA_TAGS = TAG_NAMES(SHPSTR)
+          
+          SAVEFILE = DIR_MONTH + 'M_'+YR + '-' + REPLACE(FP[0].NAME,FP[0].PERIOD,SHPFILE) +'.SAV'
+          SAVEFILES = [SAVEFILES,SAVEFILE]
+          IF FILE_MAKE(FILES,SAVEFILE,OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE
+  
+        ; ===> READ THE FILES AND COMBINE INTO A SINGLE STRUCTURE
+          STRUCT = []
+          NCINFO = NETCDF_INFO(FILES)                                         ; Get the netcdf information based on the file name
+          NCSTR = STRUCT_COPY(NCINFO,TAGNAMES=['FILE','PROD_NAME','ALG_NAME','TIME_START','TIME_END','ALG_REFERENCE',$
+                                               'SENSOR','SOURCE_DATA_VERSION','SOURCE_DATA_URL','SOURCE_DATA_DOI','TITLE','CONTRIBUTOR_NAME'])
+          FOR N=0, N_ELEMENTS(FILES)-1 DO BEGIN
+            PFILE, FILES[N], /R
+            DT = STRUCT_READ(FILES[N],TAG=RTAG,BINS=BINS,/NO_STRUCT)
+            IF BINS NE [] THEN DT = MAPS_L3B_2ARR(DT,MP=FP[N].MAP,BINS=BINS)
+            STRUCT = CREATE_STRUCT(STRUCT,FP[N].PERIOD,REFORM(DT))
+          ENDFOR
+          TAGS = TAG_NAMES(STRUCT)
+  
+        ; ===> EXTRACT THE SUBAREA DATA FROM EACH FILE
+          TEMP = STRUCT_COPY(FP[0],['SENSOR','PROD','ALG'])
+          TEMP = CREATE_STRUCT(TEMP,'FILE_METADATA', NCSTR)
+          FOR B=0, N_ELEMENTS(NAMES)-1 DO BEGIN ; ===> LOOP THROUGH EACH SUBAREA REGION
+            OK = WHERE(SUBAREA_TAGS EQ NAMES[B],/NULL,COUNTSHP)
+            IF COUNTSHP EQ 0 THEN CONTINUE
+            ATEMP = []
+            SUBS  = SHPSTR.(OK).SUBS
+            FOR T=0, N_ELEMENTS(TAGS)-1 DO ATEMP = CREATE_STRUCT(ATEMP,TAGS[T]+'_'+NAMES[B],STRUCT.(T)[SUBS])
+            TEMP = CREATE_STRUCT(TEMP,NAMES[B],ATEMP)
+          ENDFOR ; AREAS
+  
+          PRINT, 'Writing: ' + SAVEFILE
+          SAVE,FILENAME=SAVEFILE,TEMP,/COMPRESS
+        ENDFOR ; YEARS
+      
+      
+      
+      ; ===> MERGE THE YEARLY FILES INTO INDIVIDUAL SUBAREA FILES
+        DIR_MERGE = DIR_PPSUB + 'MONTHLY_MERGED-' + PROD + SL & DIR_TEST, DIR_MERGE
+        MSAVEFILES = []
+        FOR A=0, N_ELEMENTS(NAMES)-1 DO BEGIN
+          ANAME = NAMES[A]
+          FP = FILE_PARSE(SAVEFILES)
+          PERIOD = STRSPLIT(FP[0].NAME,'-',/EXTRACT) & PERIOD = PERIOD[0]
+          MSAVEFILE = DIR_MERGE + REPLACE(FP[0].NAME_EXT,[PERIOD,SHPFILE],['ALL_YEARS',SHPFILE+'-'+ANAME])
+          MSAVEFILES = [MSAVEFILES,MSAVEFILE]
+  
+          IF FILE_MAKE(SAVEFILES,MSAVEFILE,OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE
+          OUTSTRUCT = []
+          INFILES = []
+          TIME_START = []
+          TIME_END = []
+          METATEMP = []
+          METASTR = []
+          FOR V=0, N_ELEMENTS(SAVEFILES)-1 DO BEGIN
+            PERIOD = STRSPLIT(FP[V].NAME,'-',/EXTRACT)
+            YR = STRSPLIT(PERIOD[0],'_',/EXTRACT)
+            IF WHERE(YR[1] EQ YEARS) LT 0 THEN CONTINUE
+            SAV = IDL_RESTORE(SAVEFILES[V])
+            
+            ; ===> MERGE THE METADATA
+            META = SAV.FILE_METADATA
+            METATAGS = TAG_NAMES(META)
+            COPYTAGS = []
+            METATEMP = []
+            FOR T=0, N_TAGS(META)-1 DO BEGIN
+              CASE METATAGS[T] OF 
+                'FILE': INFILES = [INFILES,META.FILE]
+                'TIME_START': TIME_START = MIN([TIME_START,META.TIME_START])
+                'TIME_END': TIME_END = MAX([TIME_END,META.TIME_END])
+                ELSE: BEGIN
+                  IF ~SAME(META.(T)) THEN MESSAGE, 'ERROR: Metadata is not the same'
+                  COPYTAGS = [COPYTAGS,METATAGS[T]]
+                END  
+              ENDCASE  
+            ENDFOR
+            META = STRUCT_COPY(META[0],TAGNAMES=['FILE','TIME_START','TIME_END'],/REMOVE) 
+            IF METATEMP EQ [] THEN METATEMP = META 
+            FOR M=0, N_TAGS(META)-1 DO IF META.(M) NE METATEMP.(M) THEN MESSAGE, 'ERROR: Metadata does not match.'
+            META.ALG_REFERENCE = REPLACE(META.ALG_REFERENCE,', ','_')
+            IF HAS(META.ALG_REFERENCE,',') THEN MESSAGE, 'ERROR: Commas found in the reference name'
+            
+           ; ===> MERGE THE DATA
+            OK = WHERE(TAG_NAMES(SAV) EQ ANAME,COUNTSAV)
+            IF COUNTSAV EQ 0 THEN STOP
+            MSAV = STRUCT_RENAME(SAV.(OK),TAG_NAMES(SAV.(OK)),  TAG_NAMES(SAV.(OK))+'_'+STRJOIN([SAV.SENSOR,REPLACE(SAV.PROD,'_',''),SAV.ALG],'_'),/STRUCT_ARRAYS)
+            IF V EQ 0 THEN OUTSTRUCT = MSAV ELSE OUTSTRUCT = STRUCT_MERGE(OUTSTRUCT,MSAV)
+            
+          ENDFOR ; SAVEFILES
+          
+          META = CREATE_STRUCT('INPUT_FILES',INFILES,'TIME_START',TIME_START,'TIME_END',TIME_END,META) ; Add the file names and minmax times to the metadata structure
+          OUTSTRUCT = CREATE_STRUCT('METADATA',META,OUTSTRUCT)
+          PRINT, 'Writing ' + MSAVEFILE
+          SAVE,FILENAME=MSAVEFILE,OUTSTRUCT,/COMPRESS
+          GONE, OUTSTRUCT
+        ENDFOR ; NAMES
+  
+        ; ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+        ; ===> CALCULATE MONTHLY & ANNUAL SUMS
+  
+        DIR_SUM = DIR_PPSUB + 'SUMS-' + PROD + SL & DIR_TEST, DIR_SUM
+        PIXAREA = MAPS_PIXAREA(MPIN)  ; Average pixel area of the map
+        FP = FILE_PARSE(MSAVEFILES)
+  
+        AFILES = []
+        FOR N=0, N_ELEMENTS(NAMES)-1 DO BEGIN
+          ANAME = NAMES[N]
+          AREA_SUBS = SHPSTR.(WHERE(TAG_NAMES(SHPSTR) EQ ANAME)).SUBS
+          TOTAL_AREA = PIXAREA[AREA_SUBS]
+          MSAVE = MSAVEFILES[WHERE(STRPOS(FP.NAME,'-'+ANAME+'-') GT 0, COUNTF, /NULL)]
+          IF COUNTF NE 1 THEN STOP
+  
+          MSAVEFILE = DIR_SUM + 'MONTHLY_SUM-' + SHPFILE + '-' + ANAME + '-' + PROD +'-STATS.SAV'
+          MCSVFILE  = DIR_SUM + 'MONTHLY_SUM-' + SHPFILE + '-' + ANAME + '-' + PROD +'-STATS.CSV'
+          ASAVEFILE = DIR_SUM + 'ANNUAL_SUM-'  + SHPFILE + '-' + ANAME + '-' + PROD +'-STATS.SAV'
+          ACSVFILE  = DIR_SUM + 'ANNUAL_SUM-'  + SHPFILE + '-' + ANAME + '-' + PROD +'-STATS.CSV'
+          AFILES = [AFILES,ASAVEFILE]
+          IF FILE_MAKE(MSAVE,[MSAVEFILE,ASAVEFILE,MCSVFILE,ACSVFILE],OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE
+  
+          PRINT, 'Calculating stats for: ' + ANAME + ' - ' + PROD
+          MDATA = IDL_RESTORE(MSAVE)
+          META = MDATA.METADATA
+          TAGS = TAG_NAMES(MDATA)
+          ITAGS = STR_BREAK(TAGS,'_')
+          OK = WHERE(ITAGS EQ 'CHLORA',COUNT)
+          IF COUNT GT 0 THEN ITAGS[OK] = 'CHLOR_A'
+  
+          STRUCT = CREATE_STRUCT('SENSOR','','PROD','','ALG','','YEAR','','MONTH','','SUBAREA_NAME','','N_SUBAREA_PIXELS',0L,'TOTAL_PIXEL_AREA_KM2',0.0D,'N_PIXELS',0L,'N_PIXELS_AREA',0.0D,'SPATIAL_MEAN',0.0,'SPATIAL_VARIANCE',0.0)
+          IF KEY(SUM_STATS) THEN STRUCT = CREATE_STRUCT(STRUCT,'SPATIAL_SUM',0.0D,'MONTHLY_SUM',0.0D)
+          MONTHS = ['01','02','03','04','05','06','07','08','09','10','11','12']
+          STRUCT = REPLICATE(STRUCT_2MISSINGS(STRUCT),N_ELEMENTS(YEARS)*12)
+  
+          YSTRUCT = CREATE_STRUCT('SENSOR','','PROD','','ALG','','YEAR','','SUBAREA_NAME','','TOTAL_PIXEL_AREA_KM2','0.0D','N_MONTHS',0L,'ANNUAL_MEAN',0.0)
+          IF KEY(SUM_STATS) THEN YSTRUCT = CREATE_STRUCT(YSTRUCT,'ANNUAL_SUM',0.0D,'ANNUAL_MTON',0.0D,'ANNUAL_TTON',0.0D)
+          YSTRUCT = REPLICATE(STRUCT_2MISSINGS(YSTRUCT),N_ELEMENTS(YEARS))
+          YSTRUCT.N_MONTHS = 0 ; Initialize to zero
+  
+          I = 0
+          FOR Y=0, N_ELEMENTS(YEARS)-1 DO BEGIN
+            FOR MTH=0, N_ELEMENTS(MONTHS)-1 DO BEGIN
+              STRUCT[I].YEAR = YEARS[Y]
+              STRUCT[I].MONTH = MONTHS[MTH]
+              STRUCT[I].SUBAREA_NAME = ANAME
+              STRUCT[I].N_SUBAREA_PIXELS = N_ELEMENTS(MDATA.(0))
+              STRUCT[I].TOTAL_PIXEL_AREA_KM2 = TOTAL(PIXAREA[AREA_SUBS])
+  
+              ATAG = 'M_' + YEARS[Y] + MONTHS[MTH] + '_' + ANAME
+              CTPOS = WHERE(ITAGS[*,1] EQ YEARS[Y]+MONTHS[MTH] AND ITAGS[*,2] EQ ANAME,COUNTTAG)
+              IF COUNTTAG NE 1 THEN CONTINUE
+  
+              MTAGS = ITAGS[CTPOS,*]
+              STRUCT[I].SENSOR = MTAGS[3]
+              STRUCT[I].PROD = MTAGS[4]
+              STRUCT[I].ALG = MTAGS[5]
+  
+              MSAV = MDATA.(CTPOS)
+              VDAT = VALID_DATA(MSAV,PROD=PROD,RANGE=RNGE,SUBS=OKVDAT,COUNT=COUNTVDAT,COMPLEMENT=COMPVDAT)
+              STRUCT[I].N_PIXELS = COUNTVDAT
+              STRUCT[I].N_PIXELS_AREA = TOTAL(PIXAREA[OKVDAT])
+              STRUCT[I].SPATIAL_MEAN = GEOMEAN(VDAT[OKVDAT])
+              STRUCT[I].SPATIAL_VARIANCE = VARIANCE(VDAT[OKVDAT])
+              IF KEY(SUM_STATS) THEN BEGIN
+                VDAT[COMPVDAT] = STRUCT[I].SPATIAL_MEAN ; FILL IN MISSING PP DATA WITH THE MEAN PRIOR TO CALCULATING THE TOTAL
+                STRUCT[I].SPATIAL_SUM  = TOTAL(VDAT*1000000*PIXAREA[AREA_SUBS])
+                STRUCT[I].MONTHLY_SUM  = STRUCT[I].SPATIAL_SUM*DAYS_MONTH(MONTHS[MTH],YEAR=YEARS[Y])
+              ENDIF
+              I = I+1
+            ENDFOR ; MONTHS
+  
+            OKY = WHERE(STRUCT.YEAR EQ YEARS[Y])
+            YSTRUCT[Y].YEAR = YEARS[Y]
+            YSTRUCT[Y].SUBAREA_NAME = ANAME
+            YSTRUCT[Y].SENSOR = STRUCT[OKY[0]].SENSOR
+            YSTRUCT[Y].PROD = STRUCT[OKY[0]].PROD
+            YSTRUCT[Y].ALG = STRUCT[OKY[0]].ALG
+            YSTRUCT[Y].TOTAL_PIXEL_AREA_KM2 = TOTAL(PIXAREA[AREA_SUBS])
+            YSTRUCT[Y].ANNUAL_MEAN = MEAN(STRUCT[OKY].SPATIAL_MEAN,/NAN)
+  
+            IF KEY(SUM_STATS) THEN BEGIN
+              YSTRUCT[Y].N_MONTHS = N_ELEMENTS(WHERE(STRUCT[OKY].MONTHLY_SUM NE MISSINGS(STRUCT.MONTHLY_SUM)))
+              YSTRUCT[Y].ANNUAL_SUM = TOTAL(STRUCT[OKY].MONTHLY_SUM,/NAN)
+              YSTRUCT[Y].ANNUAL_MTON = YSTRUCT[Y].ANNUAL_SUM * 1E-6
+              YSTRUCT[Y].ANNUAL_TTON = YSTRUCT[Y].ANNUAL_MTON/1000
+            ENDIF
+          ENDFOR ; YEARS
+          
+          META = STRUCT_RENAME(META,['SENSOR'],['SENSOR_NAME'],/STRUCT_ARRAYS)
+          MMETA = REPLICATE(STRUCT_COPY(META,TAGNAMES=['INPUT_FILES','TIME_START','TIME_END'],/REMOVE),N_ELEMENTS(STRUCT))
+          YMETA = REPLICATE(STRUCT_COPY(META,TAGNAMES=['INPUT_FILES','TIME_START','TIME_END'],/REMOVE),N_ELEMENTS(YSTRUCT))
+          STRUCT = STRUCT_MERGE(STRUCT,MMETA)
+          YSTRUCT = STRUCT_MERGE(YSTRUCT,YMETA)
+          
+          PFILE, MSAVEFILE & SAVE,FILENAME=MSAVEFILE,STRUCT,/COMPRESS & STRUCT_2CSV,MCSVFILE,STRUCT
+          PFILE, ASAVEFILE & SAVE,FILENAME=ASAVEFILE,YSTRUCT,/COMPRESS & STRUCT_2CSV,ACSVFILE,YSTRUCT
+          SKIP_FILE:
+        ENDFOR ; NAMES
+  
+        ; ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+        ; ===> MERGE FILES
+  
+        PSAVEFILE = DIR_SUM + 'ANNUAL_SUM-'+SHPFILE+'-'+PROD+'-STATS.SAV'
+        PCSVFILE  = DIR_SUM + 'ANNUAL_SUM-'+SHPFILE+'-'+PROD+'-STATS.CSV'
+        PFILES = [PFILES,PSAVEFILE]
+        IF FILE_MAKE(AFILES,[PSAVEFILE,PCSVFILE],OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE
+        FOR F=0, N_ELEMENTS(AFILES)-1 DO BEGIN
+          IF F EQ 0 THEN SUBSTRUCT = IDL_RESTORE(AFILES[F]) ELSE SUBSTRUCT = STRUCT_CONCAT(IDL_RESTORE(AFILES[F]),SUBSTRUCT)
+        ENDFOR
+        SUBSTRUCT = SUBSTRUCT[SORT(STRING(SUBSTRUCT.SUBAREA_NAME)+'_'+STRING(SUBSTRUCT.YEAR))]
+        PFILE, PSAVEFILE & SAVE, FILENAME=PSAVEFILE,SUBSTRUCT,/COMPRESS & STRUCT_2CSV,PCSVFILE,SUBSTRUCT
+  
+      ENDFOR ; PRODS
+  
+      DIR_MERGE = DIR_PPSUB + 'FINAL_MERGED_SUMS'  + SL & DIR_TEST, DIR_MERGE
+      CSAVEFILE = DIR_MERGE + 'MERGED_ANNUAL_SUM-'+SHPFILE+'-'+STRJOIN(PPRODS,'_')+'-STATS.SAV'
+      CCSVFILE  = DIR_MERGE + 'MERGED_ANNUAL_SUM-'+SHPFILE+'-'+STRJOIN(PPRODS,'_')+'-STATS.CSV'
+      IF FILE_MAKE(PFILES,[CSAVEFILE,CCSVFILE],OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE
+      FOR F=0, N_ELEMENTS(PFILES)-1 DO BEGIN
+        IF F EQ 0 THEN SUBSTRUCT = IDL_RESTORE(PFILES[F]) ELSE SUBSTRUCT = STRUCT_CONCAT(SUBSTRUCT,IDL_RESTORE(PFILES[F]))
+      ENDFOR
+      SUBSTRUCT = SUBSTRUCT[SORT(STRING(SUBSTRUCT.SUBAREA_NAME)+'_'+SUBSTRUCT.PROD+'_'+SUBSTRUCT.PROD+'_'+STRING(SUBSTRUCT.YEAR))]
+      PFILE, CSAVEFILE & SAVE, FILENAME=CSAVEFILE,SUBSTRUCT,/COMPRESS & STRUCT_2CSV,CCSVFILE,SUBSTRUCT
+
+    ENDFOR ; SUBAREA SHAPEFILES   
+  ENDFOR ; VERSION  
+   
+   
+    
+
+END ; ***************** End of SOE_PP_REQUIRED *****************
