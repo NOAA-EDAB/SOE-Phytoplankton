@@ -69,7 +69,7 @@
     VER = VERSION[V]
 
 ; ===> Make the project directories    
-    DIR_VER = !S.SOE + VER + SL
+    DIR_VER = !S.READ_EDAB_SOE_PHYTOPLANKTON + VER + SL
     DNAME = 'DIR_'  + ['EXTRACTS','PP_REQUIRED','COMPARE','MOVIE','NETCDF','COMP','PLOTS','EPU_MAPS','SST']                        ; The tag name for the directory in the structure
     DIRS  = DIR_VER + ['DATA_EXTRACTS','PPREQ_EXTRACTS','COMPARE_DATA','MOVIES','NETCDF','COMPOSITES','PLOTS','EPU_MAPS','SST'] + SL  ; The actual directory name
     DIR_TEST, DIRS                                                                                  ; Make the output directories if they don't already exist
