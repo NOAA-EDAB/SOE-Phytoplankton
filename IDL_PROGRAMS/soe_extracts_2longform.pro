@@ -71,7 +71,7 @@
     
     IF NONE(DIR_DATA) THEN DIR_EXTRACTS = VERSTR.DIRS.DIR_EXTRACTS ELSE DIR_EXTRACTS = DIR_DATA
     IF NONE(DIR_OUT) THEN DIR_OUT = DIR_EXTRACTS + 'SOE_FORMAT' + SL & DIR_TEST, DIR_OUT
-    IF NONE(FILES) THEN FILES = FILE_SEARCH(DIR_EXTRACTS + STRJOIN(VERSTR.INFO.DATERANGE,'_')+'*.SAV')
+    IF NONE(FILES) THEN FILES = FILE_SEARCH(DIR_EXTRACTS + STRMID(VERSTR.INFO.DATERANGE[0],0,4) + '*_' + STRMID(VERSTR.INFO.DATERANGE[1],0,4) +'*.SAV')
 
     MERGED = []
     FOR F=0, N_ELEMENTS(FILES)-1 DO BEGIN
@@ -133,6 +133,7 @@
           'GSTATS':        BEGIN & MTH = 'MEDIAN'             & TAG = 'GSTATS_MED'   & NOTE = 'Median of the spatial geometrict mean' & END
           'ANOMALY_RATIO': BEGIN & MTH = 'RATIO_ANOMALY'      & TAG = 'AMEAN'        & NOTE = 'Arithmetic mean of the spatial data' & END
           'DIF':           BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Arithmetic mean of the spatial data' & END
+          'ANOMALY_DIF':   BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Arithmetic mean of the spatial data' & END
         ENDCASE
         STR[SUBS].VARIABLE = STR[SUBS].VARIABLE + '_' + MTH                                 ; Add the math information to the VARIABLE
         STR[SUBS].NOTES = NOTE                                                              ; Add a note about the math information

@@ -6,25 +6,27 @@
 ;   SOE_WEEKLY_PLOTS
 ;
 ; PURPOSE:
-;   $PURPOSE$
+;   To create annual CHL and PP plots for the SOE reports
 ;
-; CATEGORY:
-;   $CATEGORY$
+; PROJECT:
+;   READ=EDAB-SOE-PHYTOPLANKTON
 ;
 ; CALLING SEQUENCE:
-;   Result = SOE_WEEKLY_PLOTS($Parameter1$, $Parameter2$, $Keyword=Keyword$, ...)
+;   SOE_WEEKLY_PLOTS, VERSION
 ;
 ; REQUIRED INPUTS:
-;   Parm1.......... Describe the positional input parameters here. 
+;   VERSION.......... The annual version of the report
 ;
 ; OPTIONAL INPUTS:
-;   Parm2.......... Describe optional inputs here. If none, delete this section.
-;
+;   DATFILE.......... The data file containing the data for the plots
+;   DIR_PLOTS........ The output director for the plots
+;   
 ; KEYWORD PARAMETERS:
-;   KEY1........... Document keyword parameters like this. Note that the keyword is shown in ALL CAPS!
+;   OVERWRITE........ Overwrite files if they alredy exist
+;   BUFFER........... Turns on [0] or off [1] the plotting screen
 ;
 ; OUTPUTS:
-;   OUTPUT.......... Decribe the output of this program or function
+;   OUTPUT........... A series of annual CHL and PP plots and an animation of the plots
 ;
 ; OPTIONAL OUTPUTS:
 ;   None
@@ -42,7 +44,7 @@
 ; 
 ;
 ; NOTES:
-;   $Citations or any other useful notes$
+;   
 ;   
 ; COPYRIGHT: 
 ; Copyright (C) 2020, Department of Commerce, National Oceanic and Atmospheric Administration, National Marine Fisheries Service,
@@ -55,13 +57,16 @@
 ;    
 ; MODIFICATION HISTORY:
 ;   Dec 31, 2020 - KJWH: Initial code written
+;   Dec 20, 2021 - KJWH: Updated documentation
+;                        Restructed the steps to find the data for each plot to speed it up by avoiding parsing unnecessary files
+;                        Added V2022 info
 ;-
 ; ****************************************************************************************************
   ROUTINE_NAME = 'SOE_WEEKLY_PLOTS'
   COMPILE_OPT IDL2
   SL = PATH_SEP()
   
-  IF NONE(VERSION) THEN VERSION = 'V2021' ; MESSAGE, 'ERROR: Must provide the SOE VERSION'
+  IF NONE(VERSION) THEN MESSAGE, 'ERROR: Must provide the SOE VERSION'
   IF NONE(BUFFER) THEN BUFFER=0
 
   CLRS = LIST([217,241,253],[193,232,251],[0,173,238],[0,83,159],[37,64,143],[255,255,255])
@@ -91,6 +96,7 @@
 
     CASE VER OF
       'V2021': BEGIN & PLOT_PERIOD=['W','M'] & PLOT_PRODS = ['CHLOR_A','PPD'] & END
+      'V2022': BEGIN & PLOT_PERIOD=['W','M'] & PLOT_PRODS = ['CHLOR_A','PPD'] & END
     ENDCASE
     
     OK = WHERE_MATCH(PRODS,PLOT_PRODS,COUNT)
@@ -135,17 +141,17 @@
                 TFP = PARSE_IT(TSET.NAME)
                 TYSTR = TSET[WHERE(TFP.YEAR_START EQ YR,/NULL)]
 
-                IF N_ELEMENTS(YSTR)+N_ELEMENTS(TYSTR) NE NDATES THEN MESSAGE, 'ERROR: Number of files does not equal ' + NUM2STR(NDATES)
+                IF N_ELEMENTS(YSTR)+N_ELEMENTS(TYSTR) NE NDATES THEN MESSAGE, 'ERROR: Number of files does not equal ' + NUM2STR(NDATES),/CONTINUE
                 YSTR = [YSTR,TYSTR]
                 B = WHERE_SETS(YSTR.PERIOD)
                 IF MAX(B.N) GT 1 THEN MESSAGE, 'ERROR: Duplicate periods found in the combined structure.'
                 YSTR = STRUCT_SORT(YSTR,TAGNAMES='PERIOD')
                 
               ENDIF ELSE BEGIN
-                SET = STRUCT[WHERE(STRUCT.SENSOR EQ PSTR.DATASET AND STRUCT.MATH EQ 'STATS',COUNT)]
-                FP = PARSE_IT(SET.NAME)
-                YSTR = SET[WHERE(SET.SUBAREA EQ NAMES[FTH] AND SET.PROD EQ PROD AND SET.ALG EQ ALG AND SET.PERIOD_CODE EQ PER  AND FP.YEAR_START EQ YR,/NULL)]
-                CSTR = SET[WHERE(SET.SUBAREA EQ NAMES[FTH] AND SET.PROD EQ PROD AND SET.ALG EQ ALG AND SET.PERIOD_CODE EQ CPER,/NULL)]
+                CSTR = STRUCT[WHERE(STRUCT.SENSOR EQ PSTR.DATASET AND STRUCT.MATH EQ 'STATS' AND STRUCT.SUBAREA EQ NAMES[FTH] AND STRUCT.PROD EQ PROD AND STRUCT.ALG EQ ALG AND STRUCT.PERIOD_CODE EQ CPER,/NULL,COUNT)]
+                YSTR = STRUCT[WHERE(STRUCT.SENSOR EQ PSTR.DATASET AND STRUCT.MATH EQ 'STATS' AND STRUCT.SUBAREA EQ NAMES[FTH] AND STRUCT.PROD EQ PROD AND STRUCT.ALG EQ ALG AND STRUCT.PERIOD_CODE EQ PER, /NULL,COUNT)]
+                DP = PERIOD_2STRUCT(YSTR.PERIOD)
+                YSTR = YSTR[WHERE(DP.YEAR_START EQ YR,/NULL)]
               ENDELSE  
               
 

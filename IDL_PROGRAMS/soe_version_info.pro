@@ -55,13 +55,15 @@
 ;    
 ; MODIFICATION HISTORY:
 ;   Dec 31, 2020 - KJWH: Initial code written
+;   Nov 30, 2021 - KJWH: Added V2022 info
+;                        Added the EXTRACT_PERIODS to the INFO structure
 ;-
 ; ****************************************************************************************************
   ROUTINE_NAME = 'SOE_VERSION_INFO'
   COMPILE_OPT IDL2
   SL = PATH_SEP()
   
-  IF NONE(VERSION) THEN VERSION = ['V2021']                       ; Each year, add the next version
+  IF NONE(VERSION) THEN VERSION = ['V2022']                       ; Each year, add the next version
 
   VSTR = []                                                       ; Create a null variable for the version structure  
 ; ===> Loop throug the version  
@@ -105,12 +107,13 @@
       'V2022': BEGIN                                                                                ; V2022 specific information
         SOE_YR = '2021'                                                                             ; The last year of the SOE data
         DATERANGE = ['1998',SOE_YR]                                                                 ; The first and last year of the SOE time series
-        TEMP_DATERANGE = ['20200701','20211231']                                                    ; The date range for the "temporary" data for the end of the time series
+        TEMP_DATERANGE = ['20210501','20211231']                                                    ; The date range for the "temporary" data for the end of the time series
         MAP_IN   = 'L3B2'                                                                           ; The map for the input data
         MAP_OUT  = 'NES'                                                                            ; The map to be used for any plots
         SHPFILE  = 'NES_EPU_NOESTUARIES'                                                            ; The shapefile for any data extractions or image outlines
         SUBAREAS = ['GOM','GB','MAB']                                                               ; The subareas for data extraction
         EXTRACT_PRODS = ['CHLOR_A','PPD','PHYSIZE']
+        EXTRACT_PERIODS = ['W','WEEK','M','MONTH','A']
         PPREQ_PRODS = ['PPD-VGPM2','CHLOR_A-CCI']
         PPREQ_PERIODS = ['A','M']
         PPREQ_SHPFILE = ['NES_EPU_STATISTICAL_AREAS','NES_EPU_STATISTICAL_AREAS_NOEST']
@@ -145,21 +148,21 @@
     
     ISTR = CREATE_STRUCT('SOE_YEAR',SOE_YR,'DATERANGE',DATERANGE,'MAP_IN',MAP_IN,'MAP_OUT',MAP_OUT, 'DATAFILE',DATFILE,'SHAPEFILE',SHPFILE, $
                          'TEMP_DATERANGE',TEMP_DATERANGE,'TEMP_PRODS',TEMP_PRODS,'SUBAREA_NAMES',SUBAREAS,'SUBAREA_TITLES',SUBTITLES,'SUBAREA_OUTLINE',OUTLINE,$
-                         'EXTRACT_PRODS', EXTRACT_PRODS,'PPREQ_PRODS',PPREQ_PRODS,'PPREQ_PERIODS',PPREQ_PERIODS,'PPREQ_SHPFILE',PPREQ_SHPFILE)
+                         'EXTRACT_PRODS',EXTRACT_PRODS,'EXTRACT_PERIODS',EXTRACT_PERIODS,'PPREQ_PRODS',PPREQ_PRODS,'PPREQ_PERIODS',PPREQ_PERIODS,'PPREQ_SHPFILE',PPREQ_SHPFILE)
     
     PSTR = []
     FOR P=0, N_ELEMENTS(PRODS)-1 DO BEGIN
       SPROD = PRODS[P]
       CASE SPROD OF
-        'CHLOR_A':          BEGIN & DTSET=CHL_DATASET & TPSET=CHL_TEMP & SPROD=SPROD+'-'+CHL_ALG & TPROD=PRODS[P]+'-'+CTEMP_ALG & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_DEFAULT'  & ASCALE='RATIO'    & APAL='PAL_BLUE_ORANGE' & END
-        'PPD':              BEGIN & DTSET=PP_DATASET  & TPSET=PP_TEMP  & SPROD=SPROD+'-'+PP_ALG  & TPROD=SPROD & PSCALE='PPD_0.01_10'    & PAL='PAL_DEFAULT'  & ASCALE='RATIO'    & APAL='PAL_BLUE_ORANGE' & END
+        'CHLOR_A':          BEGIN & DTSET=CHL_DATASET & TPSET=CHL_TEMP & SPROD=SPROD+'-'+CHL_ALG & TPROD=PRODS[P]+'-'+CTEMP_ALG & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & ASCALE='RATIO'    & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PPD':              BEGIN & DTSET=PP_DATASET  & TPSET=PP_TEMP  & SPROD=SPROD+'-'+PP_ALG  & TPROD=SPROD & PSCALE='PPD_0.1_10'     & PAL='PAL_NAVY_GOLD'  & ASCALE='RATIO'    & APAL='PAL_BLUEGREEN_ORANGE' & END
         'SST':              BEGIN & DTSET=SST_DATASET & TPSET=SST_TEMP & SPROD=SPROD             & TPROD=SPROD & PSCALE='SST_0_30'       & PAL='PAL_BLUE_RED' & ASCALE='DIF_-5_5' & APAL='PAL_ANOM_BWR'    & END
-        'MICRO_PERCENTAGE': BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUE_ORANGE' & END
-        'NANO_PERCENTAGE':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUE_ORANGE' & END
-        'PICO_PERCENTAGE':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUE_ORANGE' & END
-        'MICRO':            BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUE_ORANGE' & END
-        'NANO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUE_ORANGE' & END
-        'PICO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUE_ORANGE' & END
+        'MICRO_PERCENTAGE': BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'NANO_PERCENTAGE':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PICO_PERCENTAGE':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'MICRO':            BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'NANO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PICO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD & PSCALE='NUM_0_50'       & PAL='PAL_DEFAULT'  & ASCALE='DIF_-5_5' & APAL='PAL_BLUEGREEN_ORANGE' & END
       ENDCASE
       STR = CREATE_STRUCT('DATASET',DTSET,'TEMP_DATASET',TPSET,'PROD',SPROD,'TEMP_PROD',TPROD,'PROD_SCALE',PSCALE,'PAL',PAL,'ANOM_SCALE',ASCALE,'ANOM_PAL',APAL)
       IF DTSET EQ 'OCCCI' THEN STR = CREATE_STRUCT(STR,'VERSION',OCCCI_VERSION) ELSE STR = CREATE_STRUCT(STR,'VERSION','')
