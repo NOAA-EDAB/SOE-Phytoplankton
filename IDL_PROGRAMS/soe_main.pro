@@ -95,10 +95,10 @@
 ; ===> Manually adjust the SOE program steps as needed
   IF NONE(MAKE_EPU_MAPS)          THEN MAKE_EPU_MAPS     = ''
   IF NONE(MAKE_NETCDFS)           THEN MAKE_NETCDFS      = ''
-  IF NONE(DATA_EXTRACTS)          THEN DATA_EXTRACTS     = ''
-  IF NONE(PP_REQ_EXTRACTS)        THEN PP_REQ_EXTRACTS   = ''
+  IF NONE(DATA_EXTRACTS)          THEN DATA_EXTRACTS     = 'Y'
+  IF NONE(PP_REQ_EXTRACTS)        THEN PP_REQ_EXTRACTS   = 'Y'
   IF NONE(PHYSIZE_PLOTS)          THEN PHYSIZE_PLOTS     = ''
-  IF NONE(WEEKLY_PLOTS)           THEN WEEKLY_PLOTS      = ''
+  IF NONE(WEEKLY_PLOTS)           THEN WEEKLY_PLOTS      = 'Y'
   IF NONE(ANNUAL_COMPOSITES)      THEN ANNUAL_COMPOSITES = 'Y'
   IF NONE(SST_PNGS)               THEN SST_PNGS          = ''
   IF NONE(MOVIES)                 THEN MOVIES            = ''
