@@ -83,7 +83,7 @@
       'V2022': BEGIN                                                                                ; V2022 specific information
         SOE_YR = '2021'                                                                             ; The last year of the SOE data
         DATERANGE = ['1998',SOE_YR]                                                                 ; The first and last year of the SOE time series
-        TEMP_DATERANGE = ['20210501','20211231']                                                    ; The date range for the "temporary" data for the end of the time series
+        TEMP_DATERANGE = ['20210430','20211231']                                                    ; The date range for the "temporary" data for the end of the time series
         MAP_IN   = 'L3B2'                                                                           ; The map for the input data
         TEMP_MAP = 'L3B4'
         MAP_OUT  = 'NES'                                                                            ; The map to be used for any plots
@@ -98,7 +98,7 @@
         TEMP_PRODS = ['CHLOR_A','PPD','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
         STACKED_PRODS = LIST(['CHLOR_A','PPD'],['CHLOR_A','MICRO','PPD'],['CHLOR_A','MICRO_PERCENTAGE','PPD'],['MICRO','NANO','PICO'],['MICRO','NANO','PICO']+'_PERCENTAGE')
         COMPOSITE_PRODS = LIST([['MICRO','NANO','PICO']],[['MICRO','NANO','PICO']+'_PERCENTAGE'])
-        COMPOSITE_PERIODS = ['ANNUAL','MONTH','WEEK','W','M'] 
+        COMPOSITE_PERIODS = ['ANNUAL','MONTH','WEEK','A','W','M'] 
         MOVIE_PERIODS = ['WEEK','MONTH']
         CHL_DATASET = 'OCCCI' & CHL_TEMP = 'GLOBCOLOUR' & CHL_ALG = 'CCI' & CTEMP_ALG = 'GSM'
         PP_DATASET  = 'OCCCI' & PP_TEMP  = 'GLOBCOLOUR' & PP_ALG  = 'VGPM2'
