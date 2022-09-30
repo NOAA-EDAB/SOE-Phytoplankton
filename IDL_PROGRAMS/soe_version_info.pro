@@ -63,7 +63,7 @@
   COMPILE_OPT IDL2
   SL = PATH_SEP()
   
-  IF NONE(VERSION) THEN VERSION = ['V2022']                       ; Each year, add the next version
+  IF NONE(VERSION) THEN VERSION = ['V2023']                       ; Each year, add the next version
 
   VSTR = []                                                       ; Create a null variable for the version structure  
 ; ===> Loop throug the version  
@@ -80,6 +80,35 @@
 
 ; ===> Get the VERSION specific product information    
     CASE VER OF 
+      'V2023': BEGIN                                                                                ; V2023 specific information
+        SOE_YR = '2022'                                                                             ; The last year of the SOE data
+        DATERANGE = ['1998',SOE_YR]                                                                 ; The first and last year of the SOE time series
+        TEMP_DATERANGE = ['20220101','20211231']                                                    ; The date range for the "temporary" data for the end of the time series
+        MAP_IN   = 'L3B2'                                                                           ; The map for the input data
+        TEMP_MAP = 'L3B4'
+        MAP_OUT  = 'NES'                                                                            ; The map to be used for any plots
+        SHPFILE  = 'NES_EPU_NOESTUARIES'                                                            ; The shapefile for any data extractions or image outlines
+        SUBAREAS = ['GOM','GB','MAB']                                                               ; The subareas for data extraction
+        EXTRACT_PRODS = ['CHLOR_A','PPD','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
+        EXTRACT_PERIODS = ['W','WEEK','M','MONTH','A']
+        PPREQ_PRODS = ['PPD-VGPM2','CHLOR_A-CCI']
+        PPREQ_PERIODS = ['A','M']
+        PPREQ_SHPFILE = ['NES_EPU_STATISTICAL_AREAS','NES_EPU_STATISTICAL_AREAS_NOEST']
+        PRODS = ['CHLOR_A','PPD','SST','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
+        TEMP_PRODS = ['CHLOR_A','PPD','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
+        STACKED_PRODS = LIST(['CHLOR_A','PPD'],['CHLOR_A','MICRO','PPD'],['CHLOR_A','MICRO_PERCENTAGE','PPD'],['MICRO','NANO','PICO'],['MICRO','NANO','PICO']+'_PERCENTAGE')
+        COMPOSITE_PRODS = LIST([['MICRO','NANO','PICO']],[['MICRO','NANO','PICO']+'_PERCENTAGE'])
+        COMPOSITE_PERIODS = ['ANNUAL','MONTH','WEEK','A','W','M']
+        MOVIE_PERIODS = ['WEEK','MONTH']
+        CHL_DATASET = 'OCCCI' & CHL_TEMP = 'GLOBCOLOUR' & CHL_ALG = 'CCI' & CTEMP_ALG = 'GSM'
+        PP_DATASET  = 'OCCCI' & PP_TEMP  = 'GLOBCOLOUR' & PP_ALG  = 'VGPM2'
+        PSZ_DATASET = 'OCCCI' & PSZ_TEMP = 'GLOBCOLOUR' & PSZ_ALG = 'TURNER'
+        OCCCI_VERSION = '5.0'
+        SST_DATASET = 'MUR' & SST_TEMP = ''
+        DATFILE = DSTR.DIR_EXTRACTS + VER + '-' + SHPFILE + '-COMPILED_DATA_FILE.SAV'
+        GRID_PERIOD = 'W'
+      END
+      
       'V2022': BEGIN                                                                                ; V2022 specific information
         SOE_YR = '2021'                                                                             ; The last year of the SOE data
         DATERANGE = ['1998',SOE_YR]                                                                 ; The first and last year of the SOE time series
