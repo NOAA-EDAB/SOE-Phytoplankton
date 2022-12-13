@@ -57,6 +57,7 @@
 ;   Dec 31, 2020 - KJWH: Initial code written
 ;   Nov 30, 2021 - KJWH: Added V2022 info
 ;                        Added the EXTRACT_PERIODS to the INFO structure
+;                        Added EXTRACT_STAT - the stat to be used in subareas_extract (e.g. extract data from the MEAN in the STACKED_STATS file)
 ;-
 ; ****************************************************************************************************
   ROUTINE_NAME = 'SOE_VERSION_INFO'
@@ -71,7 +72,7 @@
     VER = VERSION[V]
 
 ; ===> Make the project directories    
-    DIR_VER = !S.READ_EDAB_SOE_PHYTOPLANKTON + VER + SL
+    DIR_VER = !S.SOE_PHYTOPLANKTON + VER + SL
     DNAME = 'DIR_'  + ['EXTRACTS','PP_REQUIRED','COMPARE','MOVIE','NETCDF','COMP','PLOTS','EPU_MAPS','SST']                        ; The tag name for the directory in the structure
     DIRS  = DIR_VER + ['DATA_EXTRACTS','PPREQ_EXTRACTS','COMPARE_DATA','MOVIES','NETCDF','COMPOSITES','PLOTS','EPU_MAPS','SST'] + SL  ; The actual directory name
     DIR_TEST, DIRS                                                                                  ; Make the output directories if they don't already exist
@@ -83,14 +84,15 @@
       'V2023': BEGIN                                                                                ; V2023 specific information
         SOE_YR = '2022'                                                                             ; The last year of the SOE data
         DATERANGE = ['1998',SOE_YR]                                                                 ; The first and last year of the SOE time series
-        TEMP_DATERANGE = ['20220101','20211231']                                                    ; The date range for the "temporary" data for the end of the time series
-        MAP_IN   = 'L3B2'                                                                           ; The map for the input data
+        TEMP_DATERANGE = ['20220101','20221231']                                                    ; The date range for the "temporary" data for the end of the time series
+        MAP_IN   = 'L3B4'                                                                           ; The map for the input data
         TEMP_MAP = 'L3B4'
         MAP_OUT  = 'NES'                                                                            ; The map to be used for any plots
         SHPFILE  = 'NES_EPU_NOESTUARIES'                                                            ; The shapefile for any data extractions or image outlines
         SUBAREAS = ['GOM','GB','MAB']                                                               ; The subareas for data extraction
         EXTRACT_PRODS = ['CHLOR_A','PPD','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
         EXTRACT_PERIODS = ['W','WEEK','M','MONTH','A']
+        EXTRACT_STAT = 'MEAN'
         PPREQ_PRODS = ['PPD-VGPM2','CHLOR_A-CCI']
         PPREQ_PERIODS = ['A','M']
         PPREQ_SHPFILE = ['NES_EPU_STATISTICAL_AREAS','NES_EPU_STATISTICAL_AREAS_NOEST']
@@ -103,10 +105,11 @@
         CHL_DATASET = 'OCCCI' & CHL_TEMP = 'GLOBCOLOUR' & CHL_ALG = 'CCI' & CTEMP_ALG = 'GSM'
         PP_DATASET  = 'OCCCI' & PP_TEMP  = 'GLOBCOLOUR' & PP_ALG  = 'VGPM2'
         PSZ_DATASET = 'OCCCI' & PSZ_TEMP = 'GLOBCOLOUR' & PSZ_ALG = 'TURNER'
-        OCCCI_VERSION = '5.0'
+        OCCCI_VERSION = '6.0'
         SST_DATASET = 'MUR' & SST_TEMP = ''
         DATFILE = DSTR.DIR_EXTRACTS + VER + '-' + SHPFILE + '-COMPILED_DATA_FILE.SAV'
         GRID_PERIOD = 'W'
+        STACKED_FILES = 1                                                                           ; Set to indicate the use of "STACKED" files for inputs
       END
       
       'V2022': BEGIN                                                                                ; V2022 specific information
@@ -182,9 +185,9 @@
       ENDCASE
     ENDFOR  
     
-    ISTR = CREATE_STRUCT('SOE_YEAR',SOE_YR,'DATERANGE',DATERANGE,'MAP_IN',MAP_IN,'MAP_OUT',MAP_OUT, 'DATAFILE',DATFILE,'SHAPEFILE',SHPFILE, $
+    ISTR = CREATE_STRUCT('SOE_YEAR',SOE_YR,'DATERANGE',DATERANGE,'MAP_IN',MAP_IN,'MAP_OUT',MAP_OUT, 'DATAFILE',DATFILE,'SHAPEFILE',SHPFILE, 'STACKED',STACKED_FILES, $
                          'TEMP_DATERANGE',TEMP_DATERANGE,'TEMP_PRODS',TEMP_PRODS,'TEMP_MAP',TEMP_MAP,'STACKED_PRODS',STACKED_PRODS,'SUBAREA_NAMES',SUBAREAS,'SUBAREA_TITLES',SUBTITLES,'SUBAREA_OUTLINE',OUTLINE,$
-                         'COMPOSITE_PRODS',COMPOSITE_PRODS,'COMPOSITE_PERIODS',COMPOSITE_PERIODS,'MOVIE_PERIODS',MOVIE_PERIODS,'EXTRACT_PRODS',EXTRACT_PRODS,'EXTRACT_PERIODS',EXTRACT_PERIODS,'GRID_PERIOD',GRID_PERIOD,'PPREQ_PRODS',PPREQ_PRODS,'PPREQ_PERIODS',PPREQ_PERIODS,'PPREQ_SHPFILE',PPREQ_SHPFILE)
+                         'COMPOSITE_PRODS',COMPOSITE_PRODS,'COMPOSITE_PERIODS',COMPOSITE_PERIODS,'MOVIE_PERIODS',MOVIE_PERIODS,'EXTRACT_PRODS',EXTRACT_PRODS,'EXTRACT_PERIODS',EXTRACT_PERIODS,'EXTRACT_STAT',EXTRACT_STAT,'GRID_PERIOD',GRID_PERIOD,'PPREQ_PRODS',PPREQ_PRODS,'PPREQ_PERIODS',PPREQ_PERIODS,'PPREQ_SHPFILE',PPREQ_SHPFILE)
     
     PSTR = []
     FOR P=0, N_ELEMENTS(PRODS)-1 DO BEGIN

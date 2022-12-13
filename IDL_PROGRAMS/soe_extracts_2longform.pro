@@ -56,6 +56,8 @@
 ;    
 ; MODIFICATION HISTORY:
 ;   Dec 23, 2020 - KJWH: Initial code written
+;   Dec 06, 2022 - KJWH: Added a step to remove any blank rows
+;                        Removed the steps to indicate the GSTATS for specific products since 
 ;-
 ; ****************************************************************************************************
   ROUTINE_NAME = 'SOE_EXTRACTS_2LONGFORM'
@@ -79,10 +81,11 @@
       SOEFILE = DIR_OUT + FP.NAME + '-SOE_FORMAT.csv'                                       ; Output file name
       IF FILE_MAKE(FILES[F],SOEFILE,OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE                 ; Check if the file needs to be created
       DAT = IDL_RESTORE(FILES[F])                                                           ; Read the input file
+      DAT = DAT[WHERE(DAT.NAME NE '',/NULL)]                                                ; Remove any blank entries
       NCINFO = NETCDF_INFO(DAT.DIR+DAT.NAME+'.SAV')                                         ; Get the netcdf information based on the file name
       
 ; ===> Create a new structure from the input data      
-      STR = STRUCT_MERGE(STRUCT_COPY(DAT,TAGNAMES=['NAME','PERIOD','REGION','SUBAREA','MATH']),REPLICATE(STRUCT_2MISSINGS(CREATE_STRUCT('VARIABLE','','VALUE',0.0,'NOTES','')),N_ELEMENTS(DAT)))
+      STR = STRUCT_MERGE(STRUCT_COPY(DAT,TAGNAMES=['NAME','PERIOD','REGION','SUBAREA','MATH','EXTRACT_STAT']),REPLICATE(STRUCT_2MISSINGS(CREATE_STRUCT('VARIABLE','','VALUE',0.0,'NOTES','')),N_ELEMENTS(DAT)))
       BP = WHERE_SETS(DAT.PERIOD_CODE)                                                      ; Group by period code
       FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on periods
         SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each period
@@ -90,50 +93,51 @@
           'A':      PERIOD = 'ANNUAL'               
           'M':      PERIOD = 'MONTHLY'              
           'W':      PERIOD = 'WEEKLY'               
-          'D8':     PERIOD = '8_DAY'                
-          'ANNUAL': PERIOD = 'CLIMATOLOGICAL_ANNUAL' 
+          'D8':     PERIOD = '8 DAY'                
+          'ANNUAL': PERIOD = 'LONGTERM_ANNUAL' 
           'MONTH':  PERIOD = 'CLIMATOLOGICAL_MONTH'  
           'WEEK':   PERIOD = 'CLIMATOLOGICAL_WEEK'   
-          'DOY':    PERIOD = 'CLIMATOLOGICAL_DOY'    
+          'DOY':    PERIOD = 'CLIMATOLOGICAL_DAY_OF_YEAR'    
         ENDCASE
         STR[SUBS].VARIABLE = PERIOD + '_' + DAT[SUBS].PROD                                  ; Make the variable name based on the period and the product
       ENDFOR
 
-; ===> Add math specific information to the structure           
-      BP = WHERE_SETS(DAT.PROD)                                                             ; Group based on product
-      MATHS = REPLICATE('',N_ELEMENTS(DAT))                                                 ; Create a blank MATH array
-      FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop through products
-        SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts of each product
-        CASE BP[A].VALUE OF                                                                 ; Determine the math type based on the product
-          'CHLOR_A': MATH = 'GSTATS'
-          'PAR': MATH = 'STATS'
-          'SST': MATH = 'STATS'
-          'PPD': MATH = 'GSTATS'
-          'MICRO': MATH = 'GSTATS'
-          'NANO': MATH = 'GSTATS'
-          'PICO': MATH = 'GSTATS'
-          'MICRO_PERCENTAGE': MATH = 'STATS'
-          'NANO_PERCENTAGE': MATH = 'STATS'
-          'PICO_PERCENTAGE': MATH = 'STATS'
-        ENDCASE                                                                             ; Will need to add products if not found in the CASE statement
-        MATHS[SUBS] = MATH                                                                  ; Fill in the blank array with the stat information
-      ENDFOR
-      OK = WHERE(MATHS EQ 'GSTATS' AND DAT.MATH EQ 'STATS',COUNT)                           ; Find where the math type in the structure is STATS (i.e. not an ANOM) and the prod math type is GSTATS
-      IF COUNT GT 1 THEN STR[OK].MATH = 'GSTATS'                                            ; Change the math in the structure to GSTATS
-     
+;; ===> Add math specific information to the structure           
+;      BP = WHERE_SETS(DAT.PROD)                                                             ; Group based on product
+;      MATHS = REPLICATE('',N_ELEMENTS(DAT))                                                 ; Create a blank MATH array
+;      FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop through products
+;        SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts of each product
+;        CASE BP[A].VALUE OF                                                                 ; Determine the math type based on the product
+;          'CHLOR_A': MATH = 'GSTATS'
+;          'PAR': MATH = 'STATS'
+;          'SST': MATH = 'STATS'
+;          'PPD': MATH = 'GSTATS'
+;          'MICRO': MATH = 'GSTATS'
+;          'NANO': MATH = 'GSTATS'
+;          'PICO': MATH = 'GSTATS'
+;          'MICRO_PERCENTAGE': MATH = 'STATS'
+;          'NANO_PERCENTAGE': MATH = 'STATS'
+;          'PICO_PERCENTAGE': MATH = 'STATS'
+;        ENDCASE                                                                             ; Will need to add products if not found in the CASE statement
+;        MATHS[SUBS] = MATH                                                                  ; Fill in the blank array with the stat information
+;      ENDFOR
+;      OK = WHERE(MATHS EQ 'GSTATS' AND DAT.MATH EQ 'STATS',COUNT)                           ; Find where the math type in the structure is STATS (i.e. not an ANOM) and the prod math type is GSTATS
+;      IF COUNT GT 1 THEN STR[OK].MATH = 'GSTATS'                                            ; Change the math in the structure to GSTATS
+;     
 ;      IF HAS(TAG_NAMES(DAT),'GSTATS_N') THEN BEGIN                                          ; Loook for any GSTATS in the structure
 ;        OK = WHERE(DAT.N GT 0 AND DAT.GSTATS_N GT 0, COUNT)                                 ; Find entries that have both arithmetic and geometric stats
 ;        IF COUNT GT 0 THEN STR[OK].MATH = 'GSTATS'                                          ; Change MATH to GSTATS if the GEO stats are to be used
 ;      ENDIF
-      BP = WHERE_SETS(STR.MATH)                                                             ; Group by MATH
+      BP = WHERE_SETS(STR.MATH+'_'+STR.EXTRACT_STAT)                                         ; Group by the MATH and EXTRACT_STAT
       FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on MATH types
         SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each math group
         CASE BP[A].VALUE OF                                                                 ; Get info for each math type
-          'STATS':         BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Median of the spatial mean' & END
-          'GSTATS':        BEGIN & MTH = 'MEDIAN'             & TAG = 'GSTATS_MED'   & NOTE = 'Median of the spatial geometrict mean' & END
-          'ANOMALY_RATIO': BEGIN & MTH = 'RATIO_ANOMALY'      & TAG = 'AMEAN'        & NOTE = 'Arithmetic mean of the spatial data' & END
-          'DIF':           BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Arithmetic mean of the spatial data' & END
-          'ANOMALY_DIF':   BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Arithmetic mean of the spatial data' & END
+          'STATS':              BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
+          'STACKED_STATS_MEAN': BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
+          'GSTATS':        BEGIN & MTH = 'MEDIAN'             & TAG = 'GSTATS_MED'   & NOTE = 'Spatial median of the temporal geometric mean' & END
+          'ANOMALY_RATIO': BEGIN & MTH = 'RATIO_ANOMALY'      & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly ratio' & END
+          'DIF':           BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
+          'ANOMALY_DIF':   BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
         ENDCASE
         STR[SUBS].VARIABLE = STR[SUBS].VARIABLE + '_' + MTH                                 ; Add the math information to the VARIABLE
         STR[SUBS].NOTES = NOTE                                                              ; Add a note about the math information
