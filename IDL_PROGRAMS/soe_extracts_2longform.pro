@@ -85,7 +85,7 @@
       NCINFO = NETCDF_INFO(DAT.DIR+DAT.NAME+'.SAV')                                         ; Get the netcdf information based on the file name
       
 ; ===> Create a new structure from the input data      
-      STR = STRUCT_MERGE(STRUCT_COPY(DAT,TAGNAMES=['NAME','PERIOD','REGION','SUBAREA','MATH','EXTRACT_STAT']),REPLICATE(STRUCT_2MISSINGS(CREATE_STRUCT('VARIABLE','','VALUE',0.0,'NOTES','')),N_ELEMENTS(DAT)))
+      STR = STRUCT_MERGE(STRUCT_COPY(DAT,TAGNAMES=['NAME','PERIOD','REGION','SUBAREA','MATH','EXTRACT_TAG']),REPLICATE(STRUCT_2MISSINGS(CREATE_STRUCT('VARIABLE','','VALUE',0.0,'NOTES','')),N_ELEMENTS(DAT)))
       BP = WHERE_SETS(DAT.PERIOD_CODE)                                                      ; Group by period code
       FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on periods
         SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each period
@@ -128,16 +128,16 @@
 ;        OK = WHERE(DAT.N GT 0 AND DAT.GSTATS_N GT 0, COUNT)                                 ; Find entries that have both arithmetic and geometric stats
 ;        IF COUNT GT 0 THEN STR[OK].MATH = 'GSTATS'                                          ; Change MATH to GSTATS if the GEO stats are to be used
 ;      ENDIF
-      BP = WHERE_SETS(STR.MATH+'_'+STR.EXTRACT_STAT)                                         ; Group by the MATH and EXTRACT_STAT
+      BP = WHERE_SETS(STR.MATH+'_'+STR.EXTRACT_TAG)                                         ; Group by the MATH and EXTRACT_STAT
       FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on MATH types
         SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each math group
         CASE BP[A].VALUE OF                                                                 ; Get info for each math type
           'STATS':              BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
           'STACKED_STATS_MEAN': BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
           'GSTATS':        BEGIN & MTH = 'MEDIAN'             & TAG = 'GSTATS_MED'   & NOTE = 'Spatial median of the temporal geometric mean' & END
-          'ANOMALY_RATIO': BEGIN & MTH = 'RATIO_ANOMALY'      & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly ratio' & END
+          'ANOM_RATIO': BEGIN & MTH = 'RATIO_ANOMALY'      & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly ratio' & END
           'DIF':           BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
-          'ANOMALY_DIF':   BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
+          'ANOM_DIF':   BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
         ENDCASE
         STR[SUBS].VARIABLE = STR[SUBS].VARIABLE + '_' + MTH                                 ; Add the math information to the VARIABLE
         STR[SUBS].NOTES = NOTE                                                              ; Add a note about the math information
