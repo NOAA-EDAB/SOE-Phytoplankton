@@ -215,7 +215,7 @@
           OUTSTRUCT = CREATE_STRUCT('METADATA',META,OUTSTRUCT)
           PRINT, 'Writing ' + MSAVEFILE
           SAVE,FILENAME=MSAVEFILE,OUTSTRUCT,/COMPRESS
-          GONE, OUTSTRUCT
+     ;     GONE, OUTSTRUCT
         ENDFOR ; NAMES
   
         ; ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

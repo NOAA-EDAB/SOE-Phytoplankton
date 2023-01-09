@@ -84,22 +84,22 @@
       'V2023': BEGIN                                                                                ; V2023 specific information
         SOE_YR = '2022'                                                                             ; The last year of the SOE data
         DATERANGE = ['1998',SOE_YR]                                                                 ; The first and last year of the SOE time series
-        TEMP_DATERANGE = ['20220101','20221231']                                                    ; The date range for the "temporary" data for the end of the time series
+        TEMP_DATERANGE = ['20220701','20221231']                                                    ; The date range for the "temporary" data for the end of the time series
         MAP_IN   = 'L3B4'                                                                           ; The map for the input data
         TEMP_MAP = 'L3B4'
         MAP_OUT  = 'NES'                                                                            ; The map to be used for any plots
         SHPFILE  = 'NES_EPU_NOESTUARIES'                                                            ; The shapefile for any data extractions or image outlines
         SUBAREAS = ['GOM','GB','MAB']                                                               ; The subareas for data extraction
-        EXTRACT_PRODS = ['CHLOR_A','PPD','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
+        EXTRACT_PRODS = ['CHLOR_A','PPD','PSC_'+['MICRO','NANO','PICO','FMICRO','FNANO','FPICO']]
         EXTRACT_PERIODS = ['W','WEEK','M','MONTH','A']
         EXTRACT_STAT = 'MEAN'
         PPREQ_PRODS = ['PPD-VGPM2','CHLOR_A-CCI']
         PPREQ_PERIODS = ['A','M']
         PPREQ_SHPFILE = ['NES_EPU_STATISTICAL_AREAS','NES_EPU_STATISTICAL_AREAS_NOEST']
-        PRODS = ['CHLOR_A','PPD','SST','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
-        TEMP_PRODS = ['CHLOR_A','PPD','MICRO','NANO','PICO',['MICRO','NANO','PICO']+'_PERCENTAGE']
-        STACKED_PRODS = LIST(['CHLOR_A','PPD'],['CHLOR_A','MICRO','PPD'],['CHLOR_A','MICRO_PERCENTAGE','PPD'],['MICRO','NANO','PICO'],['MICRO','NANO','PICO']+'_PERCENTAGE')
-        COMPOSITE_PRODS = LIST([['MICRO','NANO','PICO']],[['MICRO','NANO','PICO']+'_PERCENTAGE'])
+        PRODS = ['CHLOR_A','PPD','SST','PSC_'+['MICRO','NANO','PICO','FMICRO','FNANO','FPICO']]
+        TEMP_PRODS = ['CHLOR_A','PPD','PSC_'+['MICRO','NANO','PICO','FMICRO','FNANO','FPICO']]
+        STACKED_PRODS = LIST(['CHLOR_A','PPD'],['CHLOR_A','PSC_MICRO','PPD'],['CHLOR_A','PSC_FMIRCO','PPD'],'PSC_'+['MICRO','NANO','PICO'],'PSC_'+['FMICRO','FNANO','FPICO'])
+        COMPOSITE_PRODS = LIST(['PSC_'+['MICRO','NANO','PICO']],['PSC_'+['FMICRO','FNANO','FPICO']])
         COMPOSITE_PERIODS = ['ANNUAL','MONTH','WEEK','A','W','M']
         MOVIE_PERIODS = ['WEEK','MONTH']
         CHL_DATASET = 'OCCCI' & CHL_TEMP = 'GLOBCOLOUR' & CHL_ALG = 'CCI' & CTEMP_ALG = 'GSM'
@@ -197,12 +197,12 @@
         'CHLOR_A':          BEGIN & DTSET=CHL_DATASET & TPSET=CHL_TEMP & SPROD=SPROD+'-'+CHL_ALG & TPROD=PRODS[P]+'-'+CTEMP_ALG & PTAG='MED'   & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & GSCALE='CHLOR_A_0.3_3'   & GPAL='PAL_DEFAULT' & ASCALE='RATIO'    & IMSCALE='CHLOR_A_0.1_10' & APAL='PAL_BLUEGREEN_ORANGE' & ATITLE='CHL Ratio Anomaly' & END
         'PPD':              BEGIN & DTSET=PP_DATASET  & TPSET=PP_TEMP  & SPROD=SPROD+'-'+PP_ALG  & TPROD=SPROD                  & PTAG='MED'   & PSCALE='PPD_0.1_10'     & PAL='PAL_NAVY_GOLD'  & GSCALE='PPD_0.1_2'       & GPAL='PAL_DEFAULT' & ASCALE='RATIO'    & IMSCALE='PPD_0.1_10'     & APAL='PAL_BLUEGREEN_ORANGE' & ATITLE='PP Ratio Anomaly' & END
         'SST':              BEGIN & DTSET=SST_DATASET & TPSET=SST_TEMP & SPROD=SPROD             & TPROD=SPROD                  & PTAG='AMEAN' & PSCALE='SST_0_30'       & PAL='PAL_BLUE_RED'   & GSCALE=PSCALE            & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='SST_0_30'       & APAL='PAL_ANOM_BWR'    & END
-        'MICRO_PERCENTAGE': BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='AMEAN' & PSCALE='NUM_0.0_1.0'    & PAL='PAL_DEFAULT'    & GSCALE=PSCALE            & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='NUM_0_0.8' & APAL='PAL_BLUEGREEN_ORANGE' & END
-        'NANO_PERCENTAGE':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='AMEAN' & PSCALE='NUM_0.0_1.0'    & PAL='PAL_DEFAULT'    & GSCALE=PSCALE            & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='NUM_0_0.8' & APAL='PAL_BLUEGREEN_ORANGE' & END
-        'PICO_PERCENTAGE':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='AMEAN' & PSCALE='NUM_0.0_1.0'    & PAL='PAL_DEFAULT'    & GSCALE=PSCALE            & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='NUM_0_0.8' & APAL='PAL_BLUEGREEN_ORANGE' & END
-        'MICRO':            BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='MED'   & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & GSCALE='CHLOR_A_0.03_3'  & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='CHLOR_A_0.01_10' & APAL='PAL_BLUEGREEN_ORANGE' & END
-        'NANO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='MED'   & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & GSCALE='CHLOR_A_0.03_3'  & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='CHLOR_A_0.01_10' & APAL='PAL_BLUEGREEN_ORANGE' & END
-        'PICO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='MED'   & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & GSCALE='CHLOR_A_0.03_3'  & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='CHLOR_A_0.01_10' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PSC_FMICRO': BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='AMEAN' & PSCALE='NUM_0.0_1.0'    & PAL='PAL_DEFAULT'    & GSCALE=PSCALE            & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='NUM_0_0.8' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PSC_FNANO':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='AMEAN' & PSCALE='NUM_0.0_1.0'    & PAL='PAL_DEFAULT'    & GSCALE=PSCALE            & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='NUM_0_0.8' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PSC_FPICO':  BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='AMEAN' & PSCALE='NUM_0.0_1.0'    & PAL='PAL_DEFAULT'    & GSCALE=PSCALE            & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='NUM_0_0.8' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PSC_MICRO':            BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='MED'   & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & GSCALE='CHLOR_A_0.03_3'  & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='CHLOR_A_0.01_10' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PSC_NANO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='MED'   & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & GSCALE='CHLOR_A_0.03_3'  & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='CHLOR_A_0.01_10' & APAL='PAL_BLUEGREEN_ORANGE' & END
+        'PSC_PICO':             BEGIN & DTSET=PSZ_DATASET & TPSET=PSZ_TEMP & SPROD=SPROD+'-'+PSZ_ALG & TPROD=SPROD                  & PTAG='MED'   & PSCALE='CHLOR_A_0.1_30' & PAL='PAL_NAVY_GOLD'  & GSCALE='CHLOR_A_0.03_3'  & GPAL='PAL_DEFAULT' & ASCALE='DIF_-5_5' & IMSCALE='CHLOR_A_0.01_10' & APAL='PAL_BLUEGREEN_ORANGE' & END
       ENDCASE
       STR = CREATE_STRUCT('DATASET',DTSET,'TEMP_DATASET',TPSET,'PROD',SPROD,'TEMP_PROD',TPROD,'PLOT_TAG',PTAG,'PROD_SCALE',PSCALE,'PAL',PAL,'GRID_SCALE',GSCALE,'GRID_PAL',GPAL,'IMAGE_SCALE',IMSCALE,'PROD_TITLE',UNITS(SPROD),'ANOM_TITLE',ATITLE,'ANOM_SCALE',ASCALE,'ANOM_PAL',APAL)
       IF DTSET EQ 'OCCCI' THEN STR = CREATE_STRUCT(STR,'VERSION',OCCCI_VERSION) ELSE STR = CREATE_STRUCT(STR,'VERSION','')
