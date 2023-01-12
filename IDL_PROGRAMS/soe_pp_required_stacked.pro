@@ -55,6 +55,7 @@
 ;    
 ; MODIFICATION HISTORY:
 ;   Jan 10, 2023 - KJWH: Initial code written
+;   
 ;-
 ; ****************************************************************************************************
   ROUTINE_NAME = 'SOE_PP_REQUIRED_STACKED'
@@ -123,9 +124,6 @@
         SAVEFILES = [SAVEFILES,SAVEFILE]
         IF FILE_MAKE(FILES,SAVEFILE,OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE
    
- ;       NCINFO = NETCDF_INFO(YFILE)                                         ; Get the netcdf information based on the file name
- ;       NCSTR = STRUCT_COPY(NCINFO,TAGNAMES=['FILE','PROD_NAME','ALG_NAME','TIME_START','TIME_END','ALG_REFERENCE',$
- ;                                            'SENSOR','SOURCE_DATA_VERSION','SOURCE_DATA_URL','SOURCE_DATA_DOI','TITLE','CONTRIBUTOR_NAME'])
         PFILE, YFILE, /R
         STR = STACKED_READ(YFILE,KEYS=KEYS,DB=DB,BINS=BINS,OUTHASH=DHASH,INFO=INFO,METADATA=META)
         
