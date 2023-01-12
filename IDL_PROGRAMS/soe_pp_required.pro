@@ -204,7 +204,7 @@
                 END  
               ENDCASE  
             ENDFOR
-            META = STRUCT_COPY(META[0],TAGNAMES=['FILE','TIME_START','TIME_END',REMOVETAGS],/REMOVE) 
+            META = STRUCT_COPY(META[0],TAGNAMES=['FILE','TIME_START','TIME_END'],/REMOVE) 
             IF METATEMP EQ [] THEN METATEMP = META 
             FOR M=0, N_TAGS(META)-1 DO IF META.(M) NE METATEMP.(M) THEN MESSAGE, 'ERROR: Metadata does not match.'
             META.ALG_REFERENCE = REPLACE(META.ALG_REFERENCE,', ','_')
