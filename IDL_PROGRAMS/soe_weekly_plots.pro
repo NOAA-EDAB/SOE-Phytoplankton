@@ -91,12 +91,15 @@
     IF NONE(DATFILE) THEN DATFILE = VERSTR.INFO.DATAFILE
     STRUCT = IDL_RESTORE(DATFILE)
     
+    OK = WHERE(STRUCT.MATH EQ 'STACKED_STATS',COUNT)
+    IF COUNT GT 0 THEN STRUCT[OK].MATH = 'STATS'
+    
     MTHICK = 3
 
 
     CASE VER OF
       'V2021': BEGIN & PLOT_PERIOD=['W','M'] & PLOT_PRODS = ['CHLOR_A','PPD'] & END
-      'V2022': BEGIN & PLOT_PERIOD=['W','M'] & PLOT_PRODS = ['CHLOR_A','PPD'] & END
+      ELSE: BEGIN & PLOT_PERIOD=['W','M'] & PLOT_PRODS = ['CHLOR_A','PPD'] & END
     ENDCASE
     
     OK = WHERE_MATCH(PRODS,PLOT_PRODS,COUNT)
@@ -127,8 +130,8 @@
               PSTR = VERSTR.PROD_INFO.(WHERE(TAG_NAMES(VERSTR.PROD_INFO) EQ PROD))
               ALG = VALIDS('ALGS',PSTR.PROD) & TALG = VALIDS('ALGS',PSTR.TEMP_PROD)
               CASE VALIDS('PRODS',PROD) OF
-                'CHLOR_A': BEGIN & TITLE=UNITS('CHLOROPHYLL')        & YRNG=[0.0,1.6] & PSTATS='GSTATS_MED' & END
-                'PPD':     BEGIN & TITLE=UNITS('PRIMARY_PRODUCTION') & YRNG=[0.0,2.2] & PSTATS='GSTATS_MED' & END
+                'CHLOR_A': BEGIN & TITLE=UNITS('CHLOROPHYLL')        & YRNG=[0.0,1.6] & PSTATS='MED' & END
+                'PPD':     BEGIN & TITLE=UNITS('PRIMARY_PRODUCTION') & YRNG=[0.0,2.2] & PSTATS='MED' & END
               ENDCASE             
               
               IF YR EQ TDP.YEAR THEN BEGIN ; Merge the temporary dataset with the primary dataset
