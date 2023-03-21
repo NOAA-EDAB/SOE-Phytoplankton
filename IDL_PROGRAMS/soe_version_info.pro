@@ -86,7 +86,7 @@
       'V2023': BEGIN                                                                                ; V2023 specific information
         SOE_YR = '2022'                                                                             ; The last year of the SOE data
         DATERANGE = ['1998',SOE_YR]                                                                 ; The first and last year of the SOE time series
-        TEMP_DATERANGE = ['20220701','20221231']                                                    ; The date range for the "temporary" data for the end of the time series
+        TEMP_DATERANGE = ['']                                                    ; The date range for the "temporary" data for the end of the time series
         MAP_IN   = 'L3B4'                                                                           ; The map for the input data
         TEMP_MAP = 'L3B4'
         MAP_OUT  = 'NES'                                                                            ; The map to be used for any plots
@@ -99,14 +99,14 @@
         PPREQ_PERIODS = ['A','M']
         PPREQ_SHPFILE = ['NES_EPU_STATISTICAL_AREAS_NOEST']
         PRODS = ['CHLOR_A','PPD','SST','PSC_'+['MICRO','NANO','PICO','FMICRO','FNANO','FPICO']]
-        TEMP_PRODS = ['CHLOR_A','PPD','PSC_'+['MICRO','NANO','PICO','FMICRO','FNANO','FPICO']]
+        TEMP_PRODS = '';['CHLOR_A','PPD','PSC_'+['MICRO','NANO','PICO','FMICRO','FNANO','FPICO']]
         STACKED_PRODS = LIST(['CHLOR_A','PPD'],['CHLOR_A','PSC_MICRO','PPD'],['CHLOR_A','PSC_FMICRO','PPD'],'PSC_'+['MICRO','NANO','PICO'],'PSC_'+['FMICRO','FNANO','FPICO'])
         COMPOSITE_PRODS = LIST(['PSC_'+['MICRO','NANO','PICO']],['PSC_'+['FMICRO','FNANO','FPICO']])
         COMPOSITE_PERIODS = ['ANNUAL','MONTH','WEEK','A','W','M']
         MOVIE_PERIODS = ['WEEK','MONTH']
-        CHL_DATASET = 'OCCCI' & CHL_TEMP = 'GLOBCOLOUR' & CHL_ALG = 'CCI' & CTEMP_ALG = 'GSM'
-        PP_DATASET  = 'OCCCI' & PP_TEMP  = 'GLOBCOLOUR' & PP_ALG  = 'VGPM2'
-        PSZ_DATASET = 'OCCCI' & PSZ_TEMP = 'GLOBCOLOUR' & PSZ_ALG = 'TURNER'
+        CHL_DATASET = 'OCCCI' & CHL_TEMP = '' & CHL_ALG = 'CCI' & CTEMP_ALG = ''
+        PP_DATASET  = 'OCCCI' & PP_TEMP  = '' & PP_ALG  = 'VGPM2'
+        PSZ_DATASET = 'OCCCI' & PSZ_TEMP = '' & PSZ_ALG = 'TURNER'
         OCCCI_VERSION = '6.0'
         SST_DATASET = 'MUR' & SST_TEMP = ''
         DATFILE = DSTR.DIR_EXTRACTS + VER + '-' + SHPFILE + '-COMPILED_DATA_FILE.SAV'

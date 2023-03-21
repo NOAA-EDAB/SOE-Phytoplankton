@@ -11,10 +11,7 @@
                 MOVIES              = MOVIES,$              ; Create animations
                 COMPARE_PRODS       = COMPARE_PRODS, $      ; Run COMPARE_SAT_PRODS and COMPARE_SAT_SENSORS to compare data
                 ANNUAL_COMPARE      = ANNUAL_COMPARE, $     ; Create maps and subarea extracted plots to compare the annual data between sensors
-                
-                
                 MONTHLY_TIMESERIES  = MONTHLY_TIMESERIES, $
-                
                 PFT_COMPS           = PFT_COMPS, $
                 ANOMALY_MAP         = ANOMALY_MAP, $
                 PERCENT_PRODUCTION  = PERCENT_PRODUCTION
@@ -95,12 +92,12 @@
 ; ===> Manually adjust the SOE program steps as needed
   IF ~N_ELEMENTS(MAKE_EPU_MAPS)      THEN MAKE_EPU_MAPS      = ''
   IF ~N_ELEMENTS(MAKE_NETCDFS)       THEN MAKE_NETCDFS       = ''
-  IF ~N_ELEMENTS(DATA_EXTRACTS)      THEN DATA_EXTRACTS      = ''
+  IF ~N_ELEMENTS(DATA_EXTRACTS)      THEN DATA_EXTRACTS      = 'Y'
   IF ~N_ELEMENTS(PP_REQ_EXTRACTS)    THEN PP_REQ_EXTRACTS    = ''
-  IF ~N_ELEMENTS(PHYSIZE_PLOTS)      THEN PHYSIZE_PLOTS      = 'Y'
+  IF ~N_ELEMENTS(PHYSIZE_PLOTS)      THEN PHYSIZE_PLOTS      = ''
   IF ~N_ELEMENTS(PHYSIZE_COMPOSITES) THEN PHYSIZE_COMPOSITES = ''
-  IF ~N_ELEMENTS(WEEKLY_PLOTS)       THEN WEEKLY_PLOTS       = 'Y'
-  IF ~N_ELEMENTS(STACKED_TIMESERIES) THEN STACKED_TIMESERIES = 'Y'
+  IF ~N_ELEMENTS(WEEKLY_PLOTS)       THEN WEEKLY_PLOTS       = ''
+  IF ~N_ELEMENTS(STACKED_TIMESERIES) THEN STACKED_TIMESERIES = ''
   IF ~N_ELEMENTS(ANNUAL_COMPOSITES)  THEN ANNUAL_COMPOSITES  = ''
   IF ~N_ELEMENTS(SST_PNGS)           THEN SST_PNGS           = ''
   IF ~N_ELEMENTS(SEASONAL_COMPS)     THEN SEASONAL_COMPS     = ''
