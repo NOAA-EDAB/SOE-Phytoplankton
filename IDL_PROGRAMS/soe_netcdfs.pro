@@ -1,4 +1,4 @@
-; $ID:	SOE_NETCDFS.PRO,	2020-09-01-16,	USER-KJWH	$
+; $ID:	SOE_NETCDFS.PRO,	2023-09-19-09,	USER-KJWH	$
   PRO SOE_NETCDFS, VERSION, DIR_CDF=DIR_CDF, MAKE_PNG=MAKE_PNG, PNGMAP=PNGMAP
 
 ;+
@@ -24,7 +24,7 @@
 ;   KEY1........... Document keyword parameters like this. Note that the keyword is shown in ALL CAPS!
 ;
 ; OUTPUTS:
-;   OUTPUT.......... Decribe the output of this program or function
+;   OUTPUT.......... Describe the output of this program or function
 ;
 ; OPTIONAL OUTPUTS:
 ;   None

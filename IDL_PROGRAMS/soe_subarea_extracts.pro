@@ -1,4 +1,4 @@
-; $ID:	SOE_NETCDFS.PRO,	2020-09-01-16,	USER-KJWH	$
+; $ID:	SOE_SUBAREA_EXTRACTS.PRO,	2023-09-19-09,	USER-KJWH	$
   PRO SOE_SUBAREA_EXTRACTS, VERSION, PRODUCTS=PRODUCTS, DATASETS=DATASETS, MAP_IN=MAP_IN, SHAPEFILE=SHAPEFILE, SUBAREAS=SUBAREAS, DATERANGE=DATERANGE, $
                             PERIOD=PERIOD, FILETYPE=FILETYPE, DATFILE=DATFILE, DIR_DATA=DIR_DATA, VERBOSE=VERBOSE
 
@@ -33,7 +33,7 @@
 ;   VERBOSE.......... Sent to SUBAREAS_EXTRACT to print out progress
 ;   
 ; OUTPUTS:
-;   OUTPUT.......... Decribe the output of this program or function
+;   OUTPUT.......... Describe the output of this program or function
 ;
 ; OPTIONAL OUTPUTS:
 ;   None

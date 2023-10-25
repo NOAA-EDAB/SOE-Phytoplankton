@@ -1,4 +1,4 @@
-; $ID:	SOE_MONTHLY_TIMESERIES.PRO,	2020-12-31-15,	USER-KJWH	$
+; $ID:	SOE_MONTHLY_TIMESERIES.PRO,	2023-09-19-09,	USER-KJWH	$
   FUNCTION SOE_MONTHLY_TIMESERIES
 
 ;+
@@ -24,7 +24,7 @@
 ;   KEY1........... Document keyword parameters like this. Note that the keyword is shown in ALL CAPS!
 ;
 ; OUTPUTS:
-;   OUTPUT.......... Decribe the output of this program or function
+;   OUTPUT.......... Describe the output of this program or function
 ;
 ; OPTIONAL OUTPUTS:
 ;   None

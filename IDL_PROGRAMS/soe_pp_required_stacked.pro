@@ -1,4 +1,4 @@
-; $ID:	SOE_PP_REQUIRED_STACKED.PRO,	2023-01-10-16,	USER-KJWH	$
+; $ID:	SOE_PP_REQUIRED_STACKED.PRO,	2023-09-19-09,	USER-KJWH	$
   PRO SOE_PP_REQUIRED_STACKED, VERSION, DIR_DATA=DIR_DATA, PRODUCTS=PRODUCTS, SHAPEFILE=SHAPEFILE, SAVEFILES=SAVEFILES
 
 ;+
@@ -24,7 +24,7 @@
 ;   KEY1........... Document keyword parameters like this. Note that the keyword is shown in ALL CAPS!
 ;
 ; OUTPUTS:
-;   OUTPUT.......... Decribe the output of this program or function
+;   OUTPUT.......... Describe the output of this program or function
 ;
 ; OPTIONAL OUTPUTS:
 ;   None
