@@ -1,5 +1,5 @@
 ; $ID:	SOE_EXTRACTS_2LONGFORM.PRO,	2020-12-23-10,	USER-KJWH	$
-  PRO SOE_EXTRACTS_2LONGFORM, VERSION, FILES=FILES, DIR_DATA=DIR_DATA, DIR_OUT=DIR_OUT
+  PRO SOE_EXTRACTS_2LONGFORM, VERSION_STRUCT, FILES=FILES, DIR_DATA=DIR_DATA, DIR_OUT=DIR_OUT
 
 ;+
 ; NAME:
@@ -64,43 +64,39 @@
   COMPILE_OPT IDL2
   SL = PATH_SEP()
   
-  IF NONE(VERSION)  THEN MESSAGE, 'ERROR: Must provide the SOE VERSION'
+  IF NONE(VERSION_STRUCT)  THEN MESSAGE, 'ERROR: Must provide the SOE VERSION structure'
+  VERSTR = VERSION_STRUCT
+  
+  IF NONE(DIR_DATA) THEN DIR_EXTRACTS = VERSTR.DIRS.DIR_EXTRACTS ELSE DIR_EXTRACTS = DIR_DATA
+  IF NONE(DIR_OUT) THEN DIR_OUT = DIR_EXTRACTS + 'SOE_FORMAT' + SL & DIR_TEST, DIR_OUT
+  IF NONE(FILES) THEN FILES = FILE_SEARCH(DIR_EXTRACTS + STRMID(VERSTR.INFO.DATERANGE[0],0,4) + '*_' + STRMID(VERSTR.INFO.DATERANGE[1],0,4) +'*.SAV')
 
-
-  FOR V=0, N_ELEMENTS(VERSION)-1 DO BEGIN
-    VER = VERSION[V]
-    VERSTR = SOE_VERSION_INFO(VER)
+  MERGED = []
+  FOR F=0, N_ELEMENTS(FILES)-1 DO BEGIN
+    FP = FILE_PARSE(FILES[F])
+    SOEFILE = DIR_OUT + FP.NAME + '-SOE_FORMAT.csv'                                       ; Output file name
+    IF FILE_MAKE(FILES[F],SOEFILE,OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE                 ; Check if the file needs to be created
+    DAT = IDL_RESTORE(FILES[F])                                                           ; Read the input file
+    DAT = DAT[WHERE(DAT.NAME NE '',/NULL)]                                                ; Remove any blank entries
+    NCINFO = NETCDF_INFO(DAT.DIR+DAT.NAME+'.SAV')                                         ; Get the netcdf information based on the file name
     
-    IF NONE(DIR_DATA) THEN DIR_EXTRACTS = VERSTR.DIRS.DIR_EXTRACTS ELSE DIR_EXTRACTS = DIR_DATA
-    IF NONE(DIR_OUT) THEN DIR_OUT = DIR_EXTRACTS + 'SOE_FORMAT' + SL & DIR_TEST, DIR_OUT
-    IF NONE(FILES) THEN FILES = FILE_SEARCH(DIR_EXTRACTS + STRMID(VERSTR.INFO.DATERANGE[0],0,4) + '*_' + STRMID(VERSTR.INFO.DATERANGE[1],0,4) +'*.SAV')
-
-    MERGED = []
-    FOR F=0, N_ELEMENTS(FILES)-1 DO BEGIN
-      FP = FILE_PARSE(FILES[F])
-      SOEFILE = DIR_OUT + FP.NAME + '-SOE_FORMAT.csv'                                       ; Output file name
-      IF FILE_MAKE(FILES[F],SOEFILE,OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE                 ; Check if the file needs to be created
-      DAT = IDL_RESTORE(FILES[F])                                                           ; Read the input file
-      DAT = DAT[WHERE(DAT.NAME NE '',/NULL)]                                                ; Remove any blank entries
-      NCINFO = NETCDF_INFO(DAT.DIR+DAT.NAME+'.SAV')                                         ; Get the netcdf information based on the file name
-      
-; ===> Create a new structure from the input data      
-      STR = STRUCT_MERGE(STRUCT_COPY(DAT,TAGNAMES=['NAME','PERIOD','REGION','SUBAREA','MATH','EXTRACT_TAG']),REPLICATE(STRUCT_2MISSINGS(CREATE_STRUCT('VARIABLE','','VALUE',0.0,'NOTES','')),N_ELEMENTS(DAT)))
-      BP = WHERE_SETS(DAT.PERIOD_CODE)                                                      ; Group by period code
-      FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on periods
-        SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each period
-        CASE BP[A].VALUE OF                                                                 ; Create the "PERIOD" name
-          'A':      PERIOD = 'ANNUAL'               
-          'M':      PERIOD = 'MONTHLY'              
-          'W':      PERIOD = 'WEEKLY'               
-          'D8':     PERIOD = '8 DAY'                
-          'ANNUAL': PERIOD = 'LONGTERM_ANNUAL' 
-          'MONTH':  PERIOD = 'CLIMATOLOGICAL_MONTH'  
-          'WEEK':   PERIOD = 'CLIMATOLOGICAL_WEEK'   
-          'DOY':    PERIOD = 'CLIMATOLOGICAL_DAY_OF_YEAR'    
-        ENDCASE
-        STR[SUBS].VARIABLE = PERIOD + '_' + DAT[SUBS].PROD                                  ; Make the variable name based on the period and the product
-      ENDFOR
+    ; ===> Create a new structure from the input data      
+    STR = STRUCT_MERGE(STRUCT_COPY(DAT,TAGNAMES=['NAME','PERIOD','REGION','SUBAREA','MATH','EXTRACT_TAG']),REPLICATE(STRUCT_2MISSINGS(CREATE_STRUCT('VARIABLE','','VALUE',0.0,'NOTES','')),N_ELEMENTS(DAT)))
+    BP = WHERE_SETS(DAT.PERIOD_CODE)                                                      ; Group by period code
+    FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on periods
+      SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each period
+      CASE BP[A].VALUE OF                                                                 ; Create the "PERIOD" name
+        'A':      PERIOD = 'ANNUAL'               
+        'M':      PERIOD = 'MONTHLY'              
+        'W':      PERIOD = 'WEEKLY'               
+        'D8':     PERIOD = '8 DAY'                
+        'ANNUAL': PERIOD = 'LONGTERM_ANNUAL' 
+        'MONTH':  PERIOD = 'CLIMATOLOGICAL_MONTH'  
+        'WEEK':   PERIOD = 'CLIMATOLOGICAL_WEEK'   
+        'DOY':    PERIOD = 'CLIMATOLOGICAL_DAY_OF_YEAR'    
+      ENDCASE
+      STR[SUBS].VARIABLE = PERIOD + '_' + DAT[SUBS].PROD                                  ; Make the variable name based on the period and the product
+    ENDFOR
 
 ;; ===> Add math specific information to the structure           
 ;      BP = WHERE_SETS(DAT.PROD)                                                             ; Group based on product
@@ -128,45 +124,44 @@
 ;        OK = WHERE(DAT.N GT 0 AND DAT.GSTATS_N GT 0, COUNT)                                 ; Find entries that have both arithmetic and geometric stats
 ;        IF COUNT GT 0 THEN STR[OK].MATH = 'GSTATS'                                          ; Change MATH to GSTATS if the GEO stats are to be used
 ;      ENDIF
-      BP = WHERE_SETS(STR.MATH+'_'+STR.EXTRACT_TAG)                                         ; Group by the MATH and EXTRACT_STAT
-      FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on MATH types
-        SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each math group
-        CASE BP[A].VALUE OF                                                                 ; Get info for each math type
-          'STATS':              BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
-          'STACKED_STATS_MEAN': BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
-          'GSTATS':        BEGIN & MTH = 'MEDIAN'             & TAG = 'GSTATS_MED'   & NOTE = 'Spatial median of the temporal geometric mean' & END
-          'ANOM_RATIO': BEGIN & MTH = 'RATIO_ANOMALY'      & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly ratio' & END
-          'DIF':           BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
-          'ANOM_DIF':   BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
-        ENDCASE
-        STR[SUBS].VARIABLE = STR[SUBS].VARIABLE + '_' + MTH                                 ; Add the math information to the VARIABLE
-        STR[SUBS].NOTES = NOTE                                                              ; Add a note about the math information
-        TP = WHERE(TAG_NAMES(DAT) EQ TAG,/NULL)                                             ; Find the tag for the specific tag information
-        STR[SUBS].VALUE = DAT[SUBS].(TP)                                                    ; Add the data values to the structure
-      ENDFOR
+        BP = WHERE_SETS(STR.MATH+'_'+STR.EXTRACT_TAG)                                         ; Group by the MATH and EXTRACT_STAT
+        FOR A=0, N_ELEMENTS(BP)-1 DO BEGIN                                                    ; Loop on MATH types
+          SUBS = WHERE_SETS_SUBS(BP[A])                                                       ; Get the subscripts for each math group
+          CASE BP[A].VALUE OF                                                                 ; Get info for each math type
+            'STATS':              BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
+            'STACKED_STATS_MEAN': BEGIN & MTH = 'MEDIAN'             & TAG = 'MED'          & NOTE = 'Spatial median of the temporal mean' & END
+            'GSTATS':        BEGIN & MTH = 'MEDIAN'             & TAG = 'GSTATS_MED'   & NOTE = 'Spatial median of the temporal geometric mean' & END
+            'ANOM_RATIO': BEGIN & MTH = 'RATIO_ANOMALY'      & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly ratio' & END
+            'DIF':           BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
+            'ANOM_DIF':   BEGIN & MTH = 'DIFFERENCE_ANOMALY' & TAG = 'AMEAN'        & NOTE = 'Spatial mean of the temporal anomaly difference' & END
+          ENDCASE
+          STR[SUBS].VARIABLE = STR[SUBS].VARIABLE + '_' + MTH                                 ; Add the math information to the VARIABLE
+          STR[SUBS].NOTES = NOTE                                                              ; Add a note about the math information
+          TP = WHERE(TAG_NAMES(DAT) EQ TAG,/NULL)                                             ; Find the tag for the specific tag information
+          STR[SUBS].VALUE = DAT[SUBS].(TP)                                                    ; Add the data values to the structure
+        ENDFOR
       
-; ===> Create the final output structure
-      MERGED = STRUCT_MERGE($
-               STRUCT_COPY(STR,TAGNAMES=['NAME','VARIABLE','PERIOD','MATH','REGION','SUBAREA']),$
-               STRUCT_COPY(NCINFO,TAGNAMES=['PROD','UNITS']),$
-               STRUCT_COPY(STR,TAGNAMES=['VALUE','NOTES']),$
-               STRUCT_COPY(NCINFO,TAGNAMES=['PROD_NAME','ALG_NAME','TIME_START','TIME_END','DURATION','FILE']),$
-               STRUCT_COPY(NCINFO,TAGNAMES=['ALG_REFERENCE','SENSOR','SOURCE_DATA_VERSION','SOURCE_DATA_URL','SOURCE_DATA_DOI','TITLE','CONTRIBUTOR_NAME']))
-      OK = WHERE(STRUPCASE(MERGED.NAME+'.SAV') NE STRUPCASE(MERGED.FILE),COUNT)
-      IF COUNT GT 0 THEN MESSAGE, 'ERROR merging the data and netcdf info structures.'
-      MERGED = STRUCT_COPY(MERGED, TAGNAMES='NAME',/REMOVE)
-      MERGED.PROD = MERGED.PROD + '-' + NCINFO.ALG
-      MERGED.CONTRIBUTOR_NAME = 'Kimberly Hyde | kimberly.hyde@noaa.gov | NEFSC'
-      MERGED.ALG_REFERENCE = REPLACE(MERGED.ALG_REFERENCE,', ','_')
-      IF HAS(MERGED.ALG_REFERENCE,',') THEN MESSAGE, 'ERROR: Commas found in the structure'
-      MERGED = STRUCT_RENAME(MERGED,['PROD_NAME',        'ALG_NAME', 'FILE',           'ALG_REFERENCE'],$
-                                    ['PRODUCT LONG NAME','ALGORITHM','INPUT FILE NAME','ALGORITHM REFERENCE'])
+    ; ===> Create the final output structure
+    MERGED = STRUCT_MERGE($
+             STRUCT_COPY(STR,TAGNAMES=['NAME','VARIABLE','PERIOD','MATH','REGION','SUBAREA']),$
+             STRUCT_COPY(NCINFO,TAGNAMES=['PROD','UNITS']),$
+             STRUCT_COPY(STR,TAGNAMES=['VALUE','NOTES']),$
+             STRUCT_COPY(NCINFO,TAGNAMES=['PROD_NAME','ALG_NAME','TIME_START','TIME_END','DURATION','FILE']),$
+             STRUCT_COPY(NCINFO,TAGNAMES=['ALG_REFERENCE','SENSOR','SOURCE_DATA_VERSION','SOURCE_DATA_URL','SOURCE_DATA_DOI','TITLE','CONTRIBUTOR_NAME']))
+    OK = WHERE(STRUPCASE(MERGED.NAME+'.SAV') NE STRUPCASE(MERGED.FILE),COUNT)
+    IF COUNT GT 0 THEN MESSAGE, 'ERROR merging the data and netcdf info structures.'
+    MERGED = STRUCT_COPY(MERGED, TAGNAMES='NAME',/REMOVE)
+    MERGED.PROD = MERGED.PROD + '-' + NCINFO.ALG
+    MERGED.CONTRIBUTOR_NAME = 'Kimberly Hyde | kimberly.hyde@noaa.gov | NEFSC'
+    MERGED.ALG_REFERENCE = REPLACE(MERGED.ALG_REFERENCE,', ','_')
+    IF HAS(MERGED.ALG_REFERENCE,',') THEN MESSAGE, 'ERROR: Commas found in the structure'
+    MERGED = STRUCT_RENAME(MERGED,['PROD_NAME',        'ALG_NAME', 'FILE',           'ALG_REFERENCE'],$
+                                  ['PRODUCT LONG NAME','ALGORITHM','INPUT FILE NAME','ALGORITHM REFERENCE'])
 
-      MERGED = STRUCT_SORT(MERGED,TAGNAMES=['MATH','VARIABLE','REGION'])
-      PFILE, SOEFILE
-      STRUCT_2CSV, SOEFILE, MERGED
+    MERGED = STRUCT_SORT(MERGED,TAGNAMES=['MATH','VARIABLE','REGION'])
+    PFILE, SOEFILE
+    STRUCT_2CSV, SOEFILE, MERGED
 
 
-    ENDFOR ; FILES
-  ENDFOR ; VERSION
+  ENDFOR ; FILES
 END ; ***************** End of SOE_EXTRACTS_2LONGFORM *****************
