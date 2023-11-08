@@ -177,6 +177,8 @@
         SOE_YR = '2020'                                                                             ; The last year of the SOE data
         DATERANGE = ['1998','2020']                                                                 ; The first and last year of the SOE time series
         TEMP_DATERANGE = ['20200701','20201231']                                                    ; The date range for the "temporary" data for the end of the time series
+        MAP_IN = 'L3B4'
+        TEMP_MAP = 'L3B4'
         MAP_OUT='NES'                                                                               ; The map to be used for any plots
         SHPFILE='NES_EPU_NOESTUARIES'                                                               ; The shapefile for any data extractions or image outlines
         SUBAREAS=['GOM','GB','MAB']
