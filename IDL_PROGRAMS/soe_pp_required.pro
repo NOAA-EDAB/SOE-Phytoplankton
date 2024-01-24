@@ -55,7 +55,8 @@
 ;    
 ; MODIFICATION HISTORY:
 ;   Jan 05, 2021 - KJWH: Initial code written
-;   Oct 25, 2023 - KWJS: Removed the version loop and now passing in the version structureS
+;   Oct 25, 2023 - KJWH: Removed the version loop and now passing in the version structures
+;   Jan 23, 2024 - KJWH: Now adding the "temp" data to the primary dataset - should be tested and verified
 ;-
 ; ****************************************************************************************************
   ROUTINE_NAME = 'SOE_PP_REQUIRED'
@@ -111,6 +112,7 @@
       IF COUNT NE 1 THEN MESSAGE, 'ERROR: ' + GPR + ' not found in the SOE Version structure'
       DTSET = VERSTR.PROD_INFO.(OK).DATASET
       DVERSION = VERSTR.PROD_INFO.(OK).VERSION
+      TMPSET = VERSTR.PROD_INFO.(OK).TEMP_DATASET
       CASE VPROD OF
         'PPD': BEGIN & RTAG = 'GMEAN' & RNGE = '0.001_50.0' & SUM_STATS=1 & END
         'CHLOR_A': BEGIN & RTAG = 'GMEAN' & RNGE = '0.001_80.0' & SUM_STATS=0 & END
@@ -137,36 +139,37 @@
         INFILES = []
         TIME_START = []
         TIME_END = []
-        METATEMP = []
+        META = [] 
         METASTR = []
         FOR V=0, N_ELEMENTS(SAVEFILES)-1 DO BEGIN
           PERIOD = STRSPLIT(FP[V].NAME,'-',/EXTRACT)
           YR = STRSPLIT(PERIOD[0],'_',/EXTRACT)
           IF WHERE(YR[1] EQ YEARS) LT 0 THEN CONTINUE
           SAV = IDL_RESTORE(SAVEFILES[V])
-          
+
           ; ===> MERGE THE METADATA
-          META = SAV.FILE_METADATA
-          METATAGS = TAG_NAMES(META)
+          METADATA = SAV.FILE_METADATA
+          METATAGS = TAG_NAMES(METADATA)
           REMOVETAGS = []
-          METATEMP = []
-          FOR T=0, N_TAGS(META)-1 DO BEGIN
+    ;      METATEMP = []
+          FOR T=0, N_TAGS(METADATA)-1 DO BEGIN
             CASE METATAGS[T] OF 
-              'FILE': INFILES = [INFILES,META.FILE]
-              'TIME_START': TIME_START = MIN([TIME_START,META.TIME_START])
-              'TIME_END': TIME_END = MAX([TIME_END,META.TIME_END])
+              'FILE': INFILES = [INFILES,METADATA.FILE]
+              'TIME_START': TIME_START = MIN([TIME_START,METADATA.TIME_START])
+              'TIME_END': TIME_END = MAX([TIME_END,METADATA.TIME_END])
               ELSE: BEGIN
-                IF ~SAME(META.(T)) THEN MESSAGE, 'ERROR: Metadata is not the same'
-                IF META.(T) EQ MISSINGS(META.(T)) THEN REMOVETAGS = [REMOVETAGS,METATAGS[T]]
+                IF ~SAME(METADATA.(T)) THEN MESSAGE, 'ERROR: Metadata is not the same'
+                IF METADATA.(T) EQ MISSINGS(METADATA.(T)) THEN REMOVETAGS = [REMOVETAGS,METATAGS[T]]
               END  
             ENDCASE  
           ENDFOR
-          META = STRUCT_COPY(META[0],TAGNAMES=['TIME_START','TIME_END','FILE','PERIOD_CODE'],/REMOVE) 
-         ; META = STRUCT_RENAME(META, 'FILE', 'NAME')
-          IF METATEMP EQ [] THEN METATEMP = META 
-          FOR M=0, N_TAGS(META)-1 DO IF META.(M) NE METATEMP.(M) THEN MESSAGE, 'ERROR: Metadata does not match.'
-          META.ALG_REFERENCE = REPLACE(META.ALG_REFERENCE,', ','_')
-          IF HAS(META.ALG_REFERENCE,',') THEN MESSAGE, 'ERROR: Commas found in the reference name'
+          METADATA = STRUCT_COPY(METADATA[0],TAGNAMES=['TIME_START','TIME_END','FILE','PERIOD_CODE','TIME'],/REMOVE) 
+          METADATA = STRUCT_RENAME(METADATA, 'FILE', 'NAME')
+          METADATA.ALG_REFERENCE = REPLACE(METADATA.ALG_REFERENCE,', ','_')
+          IF HAS(METADATA.ALG_REFERENCE,',') THEN MESSAGE, 'ERROR: Commas found in the reference name'
+          MTAGS = TAG_NAMES(METADATA)
+          IF META EQ [] THEN META = METADATA ; First metadata structure
+          FOR M=0, N_TAGS(META)-1 DO IF META.(M) NE METADATA.(M) THEN META = CREATE_STRUCT(META, MTAGS[M] + '_' + TMPSET, METADATA.(M))         
           
          ; ===> MERGE THE DATA
           OK = WHERE(TAG_NAMES(SAV) EQ ANAME,COUNTSAV)
@@ -178,6 +181,7 @@
         
         META = CREATE_STRUCT('INPUT_FILES',INFILES,'TIME_START',TIME_START,'TIME_END',TIME_END,META) ; Add the file names and minmax times to the metadata structure
         OUTSTRUCT = CREATE_STRUCT('METADATA',META,OUTSTRUCT)
+        
         PRINT, 'Writing ' + MSAVEFILE
         SAVE,FILENAME=MSAVEFILE,OUTSTRUCT,/COMPRESS
    ;     GONE, OUTSTRUCT
@@ -237,16 +241,22 @@
             STRUCT[I].TOTAL_PIXEL_AREA_KM2 = TOTAL(PIXAREA[AREA_SUBS],/NAN)
 
             ATAG = 'M_' + YEARS[Y] + MONTHS[MTH] + '_' + SNAME
-            CTPOS = WHERE(ITAGS[*,1] EQ YEARS[Y]+MONTHS[MTH] AND ITAGS[*,2] EQ SNAME,COUNTTAG)
-            IF COUNTTAG NE 1 THEN CONTINUE
+            CTPOS = WHERE(ITAGS[*,1] EQ YEARS[Y]+MONTHS[MTH] AND ITAGS[*,2] EQ SNAME,COUNTTAG)  
+            IF COUNTTAG EQ 0 THEN CONTINUE
+            IF COUNTTAG GT 2 THEN MESSAGE, 'ERROR: More than 2 tags match ' + ATAG
 
             MTAGS = ITAGS[CTPOS,*]
-            STRUCT[I].SENSOR = MTAGS[3]
-            STRUCT[I].PROD = MTAGS[4]
-            STRUCT[I].ALG = MTAGS[5]
+            FOR C=0, COUNTTAG-1 DO BEGIN
+              MTAG = MTAGS[C,*]
+              IF MTAG[3] NE DTSET AND C EQ 0 AND COUNTTAG GT 1 THEN MESSAGE, 'ERROR: Assumes the first option is the primary dataset, need to fix code.'
+              STRUCT[I].SENSOR = MTAG[3]
+              STRUCT[I].PROD = MTAG[4]
+              STRUCT[I].ALG = MTAG[5]
 
-            MSAV = MDATA.(CTPOS)
-            VDAT = VALID_DATA(MSAV,PROD=PROD,RANGE=RNGE,SUBS=OKVDAT,COUNT=COUNTVDAT,COMPLEMENT=COMPVDAT)
+              MSAV = MDATA.(CTPOS[C])
+              VDAT = VALID_DATA(MSAV,PROD=PROD,RANGE=RNGE,SUBS=OKVDAT,COUNT=COUNTVDAT,COMPLEMENT=COMPVDAT)
+              IF COUNTVDAT NE 0 THEN BREAK       
+            ENDFOR ; Counttags
             STRUCT[I].N_PIXELS = COUNTVDAT
             STRUCT[I].N_PIXELS_AREA = TOTAL(PIXAREA[OKVDAT],/NAN)
             STRUCT[I].SPATIAL_MEAN = GEOMEAN(VDAT[OKVDAT])
