@@ -173,7 +173,7 @@
 
         ENDFOR ; NAMES
         
-        stop
+        
         PA.SAVE, PNGFILE
         PA.CLOSE
       ENDFOR ; SHAPES
