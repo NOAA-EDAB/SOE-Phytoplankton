@@ -74,13 +74,16 @@
 
   IF KEYWORD_SET(PPREQUIRED) THEN FILES = FILE_SEARCH(VERSTR.DIRS.DIR_PPREQ_EXTRACTS + TAG_NAMES(VERSTR.SHAPEFILES) + SL + 'FINAL_MERGED_SUMS' + SL + 'MERGED_ANNUAL*.SAV')
 
-  MERGED = []
-  FOR F=0, N_ELEMENTS(FILES)-1 DO BEGIN
-    FP = FILE_PARSE(FILES[F])
-    SOEFILE = DIR_OUT + FP.NAME + '-SOE_FORMAT.csv'                                       ; Output file name
-    IF FILE_MAKE(FILES[F],SOEFILE,OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE                 ; Check if the file needs to be created
-    DAT = IDL_RESTORE(FILES[F])                                                           ; Read the input file
+  FPALL = PARSE_IT(FILES,/ALL)
 
+  MERGED = []
+  ALLFILE = DIR_OUT + STRJOIN(FPALL.PROD,'_') + '-SOE_FORMAT.csv' 
+  ALLDATA = []
+  FOR F=0, N_ELEMENTS(FILES)-1 DO BEGIN
+    FP = FPALL[F]
+    SOEFILE = DIR_OUT + FP.NAME + '-SOE_FORMAT.csv'                                       ; Output file name
+    IF FILE_MAKE(FILES[F],[SOEFILE,ALLFILE],OVERWRITE=OVERWRITE) EQ 0 THEN CONTINUE                 ; Check if the file needs to be created
+    DAT = IDL_RESTORE(FILES[F])                                                           ; Read the input file
 
     IF KEYWORD_SET(PPREQUIRED) THEN BEGIN
       ;SOEFILE = REPLACE(SOEFILE,'CHLOR_A-CCI-','')
@@ -202,6 +205,8 @@
     PFILE, SOEFILE
     STRUCT_2CSV, SOEFILE, MERGED
 
-
+    IF F EQ 0 THEN ALLDATA = MERGED ELSE ALLDATA = [ALLDATA,MERGED]
   ENDFOR ; FILES
+  PFILE, ALLFILE
+  STRUCT_2CSV, ALLFILE, ALLDATA
 END ; ***************** End of SOE_EXTRACTS_2LONGFORM *****************
