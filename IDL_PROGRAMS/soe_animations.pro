@@ -84,8 +84,8 @@
       '2024_UPWELLING': BEGIN
         DTR = GET_DATERANGE([20240601,20240830])
         PRODS = LIST('SST');,'CHLOR_A',['SST','CHLOR_A']);,'SST-ANOMALY',['SST','SST-ANOMALY'])
-        MPS = ['MAB'];,'NES','NJ_COAST']
-        SST_SCALE = [12,28] & SST_TICKS = [12,16,20,24,28] & SST_CONTOUR = 18
+        MPS = ['MAB','NJ_COAST'];,'NES','NJ_COAST']
+        SST_SCALE = [14,26] & SST_TICKS = [14,16,18,20,22,24,26] & SST_CONTOUR = 20
         SST_ASCALE = [-5,5]
         CHL_SCALE = [0.1,30]
         BUFFER = 1
