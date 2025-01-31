@@ -74,9 +74,9 @@
         BUFFER = 1
         MP = 'NES'
         SDR = ['20240101','20241231']
-        PERIODS = ['W','M']
+        PERIODS = ['M','W']
         
-        SPAL = 'PAL_BLUERED'
+        SPAL = 'PAL_BLUEYELLOWRED'
         LONS = [-76,-72,-68,-64] & LATS = [36, 40, 44]
         
         FOR R=0, N_ELEMENTS(PERIODS)-1 DO BEGIN
