@@ -76,7 +76,7 @@
         SDR = ['20240101','20241231']
         PERIODS = ['M','W']
         
-        SPAL = 'PAL_RED_WHITE_BLUE'
+        SPAL = 'PAL_BLUE_WHITE_RED'
         LONS = [-76,-72,-68,-64] & LATS = [36, 40, 44]
         
         FOR R=0, N_ELEMENTS(PERIODS)-1 DO BEGIN
