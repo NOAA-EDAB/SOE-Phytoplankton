@@ -88,7 +88,6 @@
         SST_SCALE = [14,26] & SST_TICKS = [14,16,18,20,22,24,26] & SST_CONTOUR = 20
         SST_ASCALE = [-5,5]
         CHL_SCALE = [0.1,30]
-        BUFFER = 1
         PERIOD = 'D'
       END  
     ENDCASE
